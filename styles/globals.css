@@ -463,7 +463,7 @@ mark,
 }
 
 /* =======================================================
-   5. 우측 하단 상단 이동(Scroll to Top) 버튼 디자인 보정
+   5. 우측 하단 상단 이동(Scroll to Top) 버튼 디자인 보정 (완벽 수정본)
    ======================================================= */
 /* 찌그러진 사각형 박스를 동그랗고 깔끔한 파란색 버튼으로 대수술 */
 div.fixed.bottom-4.right-4,
@@ -490,15 +490,22 @@ div.fixed.bottom-12.right-6:hover {
     transform: translateY(-3px) !important;
 }
 
-/* 내부의 깨진 아이콘/SVG 화살표를 하얗고 선명하게 정중앙 정렬 */
-div.fixed.bottom-4.right-4 i, div.fixed.bottom-4.right-4 svg,
-div.fixed.bottom-10.right-10 i, div.fixed.bottom-10.right-10 svg,
-div.fixed.bottom-12.right-6 i, div.fixed.bottom-12.right-6 svg {
+/* [해결] 내부에서 지저분하게 깨지고 겹쳐 있던 기존 SVG/아이콘을 흔적도 없이 완전 박멸 */
+div.fixed.bottom-4.right-4 svg, div.fixed.bottom-4.right-4 i,
+div.fixed.bottom-10.right-10 svg, div.fixed.bottom-10.right-10 i,
+div.fixed.bottom-12.right-6 svg, div.fixed.bottom-12.right-6 i {
+    display: none !important;
+}
+
+/* [새출발] 절대 안 찌그러지는 선명한 기하학 백색 화살표를 정중앙에 새로 주입 */
+div.fixed.bottom-4.right-4::after,
+div.fixed.bottom-10.right-10::after,
+div.fixed.bottom-12.right-6::after,
+[class*="fixed"][class*="bottom-"][class*="right-"]::after {
+    content: "▲" !important;
     color: #ffffff !important;
-    fill: #ffffff !important;
-    font-size: 16px !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
     display: inline-block !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    transform: none !important;
+    margin-top: -2px !important; /* 정중앙 정렬 균형을 위한 미세 조정 */
 }

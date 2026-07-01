@@ -463,63 +463,17 @@ mark,
 }
 
 /* =======================================================
-   5. 우측 하단 상단 이동(Scroll to Top) 버튼 디자인 및 기능 완벽 보정
+   5. 우측 하단 상단 이동(Scroll to Top) 버튼 디자인 및 기능 완벽 보정 (폐기 및 제거)
    ======================================================= */
-/* 찌그러진 박스를 동그랗고 깔끔한 파란색 버튼으로 개조 */
+/* [폐기] 모양 보정 및 기능 복구 코드 (image_23.png 참조)는 모두 제거합니다. */
+
+/* [사용자 요청] 작동하지 않는 스크롤 버튼 자체를 완전히 제거합니다. */
 div.fixed.bottom-4.right-4,
 div.fixed.bottom-10.right-10,
 div.fixed.bottom-12.right-6,
 [class*="fixed"][class*="bottom-"][class*="right-"] {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background-color: #3182ce !important; /* 우리 테마 파란색 */
-    border: none !important;
-    border-radius: 50% !important;
-    width: 44px !important;
-    height: 44px !important;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15) !important;
-    transition: all 0.2s ease-in-out !important;
-    overflow: hidden !important; /* 내부 요소가 원 밖으로 절대 삐져나오지 않게 차단 */
-    cursor: pointer !important;
-}
-
-/* 마우스 올렸을 때 자연스럽게 슥 떠오르는 호버 효과 */
-div.fixed.bottom-4.right-4:hover,
-div.fixed.bottom-10.right-10:hover,
-div.fixed.bottom-12.right-6:hover {
-    background-color: #2b6cb0 !important;
-    transform: translateY(-3px) !important;
-}
-
-/* ★ [기능 부활 핵심 치트키] display: none 대신 모든 자식을 투명하게 펼쳐 클릭 링크 기능 전면 복구 ★ */
-div.fixed.bottom-4.right-4 *,
-div.fixed.bottom-10.right-10 *,
-div.fixed.bottom-12.right-6 *,
-[class*="fixed"][class*="bottom-"][class*="right-"] * {
-    position: absolute !important;
-  
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    opacity: 0 !important; /* 100% 투명하게 만들어 지저분한 도형을 완벽히 지우되, 클릭은 정상 작동 */
-    cursor: pointer !important;
-}
-
-/* 투명해진 기능성 자식들 밑에, 오직 우리가 새로 만든 선명한 백색 화살표 하나만 띄우기 */
-div.fixed.bottom-4.right-4::after,
-div.fixed.bottom-10.right-10::after,
-div.fixed.bottom-12.right-6::after,
-[class*="fixed"][class*="bottom-"][class*="right-"]::after {
-    content: "▲" !important;
-    color: #ffffff !important;
-    font-size: 14px !important;
-    line-height: 1 !important;
-    display: block !important;
-    margin-top: -1px !important; /* 정중앙 밸런스 조정 */
-    pointer-events: none !important; /* 마우스 클릭이 뒤에 있는 진짜 기능성 투명 버튼들에 꽂히도록 통과 */
+    display: none !important; /* [사용자 요청] 요소를 완전히 제거하여 보이지 않게 합니다. */
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important; /* 혹시나 숨겨진 요소가 클릭되지 않도록 방지 */
 }

@@ -99,7 +99,7 @@ nav {
   @apply right-auto left-0 hidden lg:block z-10 !important;
 }
 
-/* 隐藏滚动条 */
+/* 스크롤바 숨기기 */
 .scroll-hidden {
   -ms-overflow-style: none;
   overflow: -moz-scrollbars-none;
@@ -118,7 +118,6 @@ nav {
 
 .medium-zoom-overlay {
   background: none !important;
-  /* background: rgba(0, 0, 0, 0.01) none repeat scroll 0% 0% !important; */
 }
 
 .shadow-text {
@@ -164,12 +163,12 @@ nav {
   margin: -0.125em 0.25em;
 }
 
-/* twikoo 评论区超链接样式 */
+/* twikoo 댓글 영역 하이퍼링크 스타일 */
 .tk-main a {
   @apply text-blue-700;
 }
 
-/* twikoo 内置的 element-ui 加载样式 */
+/* twikoo 내장 element-ui 로딩 스타일 */
 .el-loading-spinner {
   @apply flex justify-center items-center;
 }
@@ -209,9 +208,6 @@ nav {
   margin-right: 0.2rem;
 }
 
-/* .webmention-counts .counts > span {
-  margin-right: .8rem;
-} */
 .webmention-counts .counts > span:not(:last-child):after {
   content: ' • ';
 }
@@ -267,11 +263,11 @@ a.avatar-wrapper {
 }
 
 .writing-vertical {
-  writing-mode: vertical-rl; /* 竖向排列从右向左 */
-  text-orientation: upright; /* 文字方向正常 */
+  writing-mode: vertical-rl;
+  text-orientation: upright;
 }
 
-/* Chatbase 在移动端禁止遮挡 */
+/* 모바일 화면에서 Chatbase 가림 방지 */
 @media (max-width: 700px) {
   button#chatbase-bubble-button {
     margin-bottom: 42px;
@@ -287,20 +283,19 @@ img {
   overflow: hidden;
 }
 
-
-.lazy-image-placeholder{
+.lazy-image-placeholder {
   background: 
       linear-gradient(90deg,#0001 33%,#0005 50%,#0001 66%)
       #f2f2f2;
   background-size:300% 100%;
   animation: l1 1s infinite linear;
-  }
-  @keyframes l1 {
+}
+@keyframes l1 {
   0% {background-position: right}
 }
 
 /* ==========================================
-   도움말 센터 커스텀 스타일 
+    도움말 센터 커스텀 스타일 (정밀 수정 완료)
    ========================================== */
 
 /* 1. 하단/사이드바 저작권 푸터 완전 삭제 */
@@ -315,20 +310,60 @@ div.overflow-x-auto > div.md\:justify-end {
 }
 
 /* 3. 나눔고딕 폰트 사이트 전체 강제 적용 */
-body, p, span, a, h1, h2, h3, h4, h5, h6, div, article { 
-    font-family: 'NanumBarunGothic', sans-serif !important; 
+body, h1, h2, h3, h4, h5, h6, input, textarea, select { 
+    font-family: 'Nanum Gothic', sans-serif !important; 
 }
 
-/* 4. 본문 크기 시원하게 키우기 및 줄간격 최적화 */
-p, span, .notion-text, .gitbook-content div { 
-    font-size: 1.1em !important; 
-    line-height: 1.7 !important; 
+/* 4. 본문 크기 최적화 및 리스트/콜아웃 간격 조정 */
+.notion-text, p, .gitbook-content p { 
+    font-size: 16px !important; 
+    line-height: 1.8 !important; 
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
 }
-/* 5. 우측 하단 라이브2D 펫 캐릭터(강아지) 영구 박멸 */
-#live2d, 
-canvas#live2d, 
-[id*="live2d"], 
-.live2d { 
+
+/* 리스트(글머리 기호) 상하 간격 축소 및 줄간격 확보 */
+ul li, ol li, .notion-list-item {
+    margin-top: 0.2rem !important;
+    margin-bottom: 0.2rem !important;
+    line-height: 1.7 !important;
+    font-size: 16px !important;
+}
+
+/* 콜아웃 내부 줄간격 널널하게 보정 */
+.notion-callout, .notion-callout-text, [class*="callout"] {
+    line-height: 1.8 !important;
+}
+
+/* 5. 노션 페이지간 링크 크기가 너무 커지는 현상 다운사이징 */
+.notion-page-link, a[class*="page-link"], .notion-page-shortcut {
+    font-size: 15px !important;
+    font-weight: 500 !important;
+}
+
+/* 6. 인용문구 및 수학공식 글자 크기 폭발 버그 정상화 */
+.notion-quote, blockquote, .notion-quote-text {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+}
+.notion-equation, .katex-display, .katex {
+    font-size: 1.1em !important; 
+}
+.katex span, .notion-equation span {
+    font-size: inherit !important; 
+}
+
+/* 7. [추가] 표(Table) 테두리 선 선명하게 고정 (진한 회색) */
+.notion-table, 
+.notion-table-cell, 
+.notion-table-th, 
+.notion-table-td,
+table, th, td {
+    border-color: #4b5563 !important; /* 선명한 진한 회색 */
+}
+
+/* 8. 우측 하단 라이브2D 펫 캐릭터(강아지) 영구 박멸 */
+#live2d, canvas#live2d, [id*="live2d"], .live2d { 
     display: none !important; 
     visibility: hidden !important;
     pointer-events: none !important;

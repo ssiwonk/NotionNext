@@ -378,3 +378,14 @@ table, th, td {
     visibility: hidden !important;
     pointer-events: none !important;
 }
+
+/* 8. [추가] 왼쪽 메뉴판 & 오른쪽 목차(TOC) 글자 크기 다운사이징 */
+/* 왼쪽 사이드바 대메뉴 및 서브메뉴 링크 14px 고정 */
+nav a, .sidebar a, aside a, [class*="sidebar"] a, .gitbook-sidebar a {
+    font-size: 0.9em !important;
+}
+/* 오른쪽 목차(TOC) 링크 14px 고정 */
+#gitbook-toc-float a, .gitbook-toc a, .toc a, [class*="toc"] a {
+    font-size: 0.9em !important;
+}
+

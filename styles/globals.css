@@ -316,7 +316,7 @@ body, h1, h2, h3, h4, h5, h6, input, textarea, select {
 .notion-text, 
 p, 
 .gitbook-content p { 
-  font-size: 1.1em !important; 
+  font-size: 1.05em !important; 
   line-height: 1.8 !important; 
   margin-top: 0.5rem !important; 
   margin-bottom: 0.5rem !important;
@@ -329,7 +329,7 @@ ol li,
   margin-top: 0rem !important; 
   margin-bottom: 0rem !important; 
   line-height: 1.0 !important; 
-  font-size: 1.1em !important;
+  font-size: 1.05em !important;
 }
 
 /* [목록 버그 해결] 리스트 내부로 파고든 여백 전면 제로화 */
@@ -372,7 +372,7 @@ blockquote,
 .notion-equation, 
 .katex-display, 
 .katex { 
-  font-size: 1.1em !important; 
+  font-size: 1.05em !important; 
 }
 .katex span, 
 .notion-equation span { 

@@ -356,7 +356,7 @@ ol li .notion-text,
 .notion-page-link, 
 a[class*="page-link"], 
 .notion-page-shortcut {
-  font-size: 15px !important; 
+  font-size: 1em !important; 
   font-weight: 500 !important; 
 }
 
@@ -364,7 +364,7 @@ a[class*="page-link"],
 .notion-quote, 
 blockquote, 
 .notion-quote-text {
-  font-size: 15px !important; 
+  font-size: 1em !important; 
   line-height: 1.7 !important; 
 }
 

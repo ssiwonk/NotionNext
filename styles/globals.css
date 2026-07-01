@@ -298,3 +298,29 @@ img {
   @keyframes l1 {
   0% {background-position: right}
 }
+
+/* ==========================================
+   도움말 센터 커스텀 스타일 
+   ========================================== */
+
+/* 1. 하단/사이드바 저작권 푸터 완전 삭제 */
+footer, .gitbook-footer, main#wrapper footer, .theme-gitbook footer, footer.z-20 { 
+    display: none !important; 
+}
+
+/* 2. 소셜 공유 바 영역 완벽 박멸 */
+.article-wrapper > div.m-1.overflow-x-auto, 
+div.overflow-x-auto > div.md\:justify-end { 
+    display: none !important; 
+}
+
+/* 3. 나눔고딕 폰트 사이트 전체 강제 적용 */
+body, p, span, a, h1, h2, h3, h4, h5, h6, div, article { 
+    font-family: 'Nanum Gothic', sans-serif !important; 
+}
+
+/* 4. 본문 크기 시원하게 키우기 및 줄간격 최적화 */
+p, span, .notion-text, .gitbook-content div { 
+    font-size: 16px !important; 
+    line-height: 1.8 !important; 
+}

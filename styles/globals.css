@@ -389,3 +389,40 @@ nav a, .sidebar a, aside a, [class*="sidebar"] a, .gitbook-sidebar a {
     font-size: 0.9em !important;
 }
 
+/* 전역 텍스트 선택 및 하이라이트 색상 변경 */
+::selection {
+  background-color: rgba(66, 153, 225, 0.3) !important; /* 파란색 배경 */
+  color: #3182ce !important; /* 파란색 텍스트 */
+}
+
+/* 노션 넥스트 활성 메뉴 및 링크 색상 변경 */
+.notion-link.notion-active,
+.notion-link.active,
+.notion-link[data-active="true"] {
+  color: #3182ce !important; /* 파란색 텍스트 */
+  background-color: rgba(66, 153, 225, 0.1) !important; /* 옅은 파란색 배경 */
+}
+
+/* 오른쪽 TOC 항목 기본 색상 변경 */
+.notion-table-of-contents-item {
+  color: #4a5568 !important; /* 비활성 회색 */
+}
+
+/* 오른쪽 TOC 항목 활성 색상 변경 */
+.notion-table-of-contents-item-active {
+  color: #3182ce !important; /* 파란색 텍스트 */
+}
+
+/* 오른쪽 TOC 전체 항목을 파란색으로 강제 변경 (사용자 요청에 따라) */
+.notion-table-of-contents-item a {
+  color: #3182ce !important; /* 파란색 텍스트 */
+}
+
+/* 텍스트 하이라이트 색상 변경 (제목 아래 등) */
+mark,
+.notion-highlight,
+.notion-text-highlight-green {
+  background-color: rgba(66, 153, 225, 0.2) !important;
+  color: #3182ce !important;
+}
+

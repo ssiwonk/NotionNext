@@ -14,7 +14,6 @@ import {
 } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
-// 하단 단축키 안내 한글화
 const ShortCutActions = [
   {
     key: '↑ ↓',
@@ -98,12 +97,11 @@ export default function AlgoliaSearchModal({ cRef }) {
     'enter',
     e => {
       if (isInputFocused && searchResults.length > 0) {
-        onJumpSearchResult()
+        onJumpSearchResult(index)
       }
     },
     { enableOnFormTags: true }
   )
-
   // 검색 결과 페이지로 이동
   const onJumpSearchResult = () => {
     if (searchResults.length > 0) {
@@ -255,8 +253,7 @@ export default function AlgoliaSearchModal({ cRef }) {
       <div
         className={`${
           isModalOpen ? 'opacity-100' : 'invisible opacity-0 translate-y-10'
-        } max-h-[80vh] flex flex-col justify-between w-full min-h-[10rem] h-full md:h-fit max-w-xl dark:bg-hexo-black-gray dark:border-gray-800 bg-white p-5 rounded-lg z-50 shadow border hover:border-blue-600 duration-300 transition-all `}>
-        
+        } max-h-[80vh] flex flex-col justify-between w-full min-h-[10rem] h-full md:h-fit max-w-xl dark:bg-hexo-black-gray dark:border-gray-800 bg-white dark:bg- p-5 rounded-lg z-50 shadow border hover:border-blue-600 duration-300 transition-all `}>
         <div className='flex justify-between items-center'>
           <div className='text-2xl text-blue-600 dark:text-yellow-600 font-bold'>
             검색
@@ -272,8 +269,8 @@ export default function AlgoliaSearchModal({ cRef }) {
           type='text'
           placeholder='검색어를 입력하세요...'
           onChange={e => handleInputChange(e)}
-          onFocus={() => setIsInputFocused(true)}
-          onBlur={() => setIsInputFocused(false)}
+          onFocus={() => setIsInputFocused(true)} 
+          onBlur={() => setIsInputFocused(false)} 
           className='text-black dark:text-gray-200 bg-gray-50 dark:bg-gray-600 outline-blue-500 w-full px-4 my-2 py-1 mb-4 border rounded-md'
           ref={inputRef}
         />
@@ -283,7 +280,6 @@ export default function AlgoliaSearchModal({ cRef }) {
           <TagGroups />
         </div>
 
-        {/* 예외 처리: 검색 결과 없음 문구 한글화 */}
         {searchResults.length === 0 && keyword && !isLoading && (
           <div>
             <p className=' text-slate-600 text-center my-4 text-base'>
@@ -294,7 +290,6 @@ export default function AlgoliaSearchModal({ cRef }) {
           </div>
         )}
 
-        {/* 결과 리스트 출력 */}
         <ul className='flex-1 overflow-auto'>
           {searchResults.map((result, index) => (
             <li
@@ -314,7 +309,6 @@ export default function AlgoliaSearchModal({ cRef }) {
 
         <Pagination totalPage={totalPage} page={page} switchPage={switchPage} />
         
-        {/* 하단 메타 레이아웃 가이드 바 한글화 */}
         <div className='flex items-center justify-between mt-2 sm:text-sm text-xs dark:text-gray-300'>
           {totalHit === 0 && (
             <div className='flex items-center'>
@@ -333,7 +327,6 @@ export default function AlgoliaSearchModal({ cRef }) {
             </div>
           )}
           
-          {/* 검색 통계 문구 한글화 */}
           <div>
             {totalHit > 0 && (
               <p>
@@ -381,7 +374,7 @@ function TagGroups() {
               }>
               <div className='text-lg'>{tag.name} </div>
               {tag.count ? (
-                <sup className='relative ml-1'>{tag.count} sup>
+                <sup className='relative ml-1'>{tag.count}</sup>
               ) : (
                 <></>
               )}
@@ -395,6 +388,7 @@ function TagGroups() {
 
 /**
  * 하단 내부 하위 페이지네이션
+ * @param {*} param0
  */
 function Pagination(props) {
   const { totalPage, page, switchPage } = props

@@ -463,9 +463,9 @@ mark,
 }
 
 /* =======================================================
-   5. 우측 하단 상단 이동(Scroll to Top) 버튼 디자인 보정 (완벽 수정본)
+   5. 우측 하단 상단 이동(Scroll to Top) 버튼 디자인 보정 (완전 박멸 버전)
    ======================================================= */
-/* 찌그러진 사각형 박스를 동그랗고 깔끔한 파란색 버튼으로 대수술 */
+/* 찌그러진 박스를 동그랗고 깔끔한 파란색 버튼으로 개조 */
 div.fixed.bottom-4.right-4,
 div.fixed.bottom-10.right-10,
 div.fixed.bottom-12.right-6,
@@ -473,9 +473,9 @@ div.fixed.bottom-12.right-6,
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    background-color: #3182ce !important; /* 배경을 우리 테마에 맞춘 파란색으로 */
-    border: none !important; /* 깨져서 보이는 지저분한 선 제거 */
-    border-radius: 50% !important; /* 각진 모양에서 예쁜 원형 버튼으로 변경 */
+    background-color: #3182ce !important; /* 우리 테마 파란색 */
+    border: none !important;
+    border-radius: 50% !important;
     width: 44px !important;
     height: 44px !important;
     box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15) !important;
@@ -486,26 +486,29 @@ div.fixed.bottom-12.right-6,
 div.fixed.bottom-4.right-4:hover,
 div.fixed.bottom-10.right-10:hover,
 div.fixed.bottom-12.right-6:hover {
-    background-color: #2b6cb0 !important; /* 조금 더 진한 파란색 */
+    background-color: #2b6cb0 !important;
     transform: translateY(-3px) !important;
 }
 
-/* [해결] 내부에서 지저분하게 깨지고 겹쳐 있던 기존 SVG/아이콘을 흔적도 없이 완전 박멸 */
-div.fixed.bottom-4.right-4 svg, div.fixed.bottom-4.right-4 i,
-div.fixed.bottom-10.right-10 svg, div.fixed.bottom-10.right-10 i,
-div.fixed.bottom-12.right-6 svg, div.fixed.bottom-12.right-6 i {
+/* ★ [핵폭탄 치트키] 버튼 내부의 모든 잔상(div, span, svg, 패스 등)을 예외 없이 완전히 박멸 ★ */
+div.fixed.bottom-4.right-4 *,
+div.fixed.bottom-10.right-10 *,
+div.fixed.bottom-12.right-6 *,
+[class*="fixed"][class*="bottom-"][class*="right-"] * {
     display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
-/* [새출발] 절대 안 찌그러지는 선명한 기하학 백색 화살표를 정중앙에 새로 주입 */
+/* 내부를 깨끗이 비운 뒤, 오직 우리가 새로 만든 백색 화살표만 정중앙에 노출 */
 div.fixed.bottom-4.right-4::after,
 div.fixed.bottom-10.right-10::after,
 div.fixed.bottom-12.right-6::after,
 [class*="fixed"][class*="bottom-"][class*="right-"]::after {
     content: "▲" !important;
     color: #ffffff !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
     line-height: 1 !important;
-    display: inline-block !important;
-    margin-top: -2px !important; /* 정중앙 정렬 균형을 위한 미세 조정 */
+    display: block !important;
+    margin-top: -1px !important; /* 정중앙 정렬을 위한 미세 조정 */
 }

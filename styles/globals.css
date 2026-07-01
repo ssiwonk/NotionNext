@@ -64,7 +64,7 @@ nav {
 }
 
 .shadow-text { 
-  text-shadow: 0.1em 0.1em 0.2em black; 
+  text-shadow: 0.1.05em 0.1.05em 0.2em black; 
 }
 
 .notion-code-copy-button > svg { 
@@ -328,7 +328,7 @@ ol li,
 .notion-list-item {
   margin-top: 0rem !important; 
   margin-bottom: 0rem !important; 
-  line-height: 1.0 !important; 
+  line-height: 1.8 !important; 
   font-size: 1.05em !important;
 }
 
@@ -356,7 +356,7 @@ ol li .notion-text,
 .notion-page-link, 
 a[class*="page-link"], 
 .notion-page-shortcut {
-  font-size: 1em !important; 
+  font-size: 1.05em !important; 
   font-weight: 500 !important; 
 }
 
@@ -364,8 +364,8 @@ a[class*="page-link"],
 .notion-quote, 
 blockquote, 
 .notion-quote-text {
-  font-size: 1em !important; 
-  line-height: 1.7 !important; 
+  font-size: 1.05em !important; 
+  line-height: 1.8 !important; 
 }
 
 /* [수학공식] 수식이 비정상적으로 거대해지던 중첩 버그 차단 */

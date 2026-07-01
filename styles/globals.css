@@ -342,7 +342,7 @@ ul li .notion-text, ol li .notion-text,
 
 /* 콜아웃 내부 줄간격 보정 */
 .notion-callout, .notion-callout-text, [class*="callout"] {
-    line-height: 1.8 !important;
+    line-height: 2.0 !important;
 }
 
 /* 5. 노션 페이지간 링크 크기 다운사이징 */

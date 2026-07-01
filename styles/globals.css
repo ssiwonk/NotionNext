@@ -316,11 +316,11 @@ div.overflow-x-auto > div.md\:justify-end {
 
 /* 3. 나눔고딕 폰트 사이트 전체 강제 적용 */
 body, p, span, a, h1, h2, h3, h4, h5, h6, div, article { 
-    font-family: 'Nanum Gothic', sans-serif !important; 
+    font-family: 'NanumBarunGothic', sans-serif !important; 
 }
 
 /* 4. 본문 크기 시원하게 키우기 및 줄간격 최적화 */
 p, span, .notion-text, .gitbook-content div { 
-    font-size: 16px !important; 
-    line-height: 1.8 !important; 
+    font-size: 1.1em !important; 
+    line-height: 1.7 !important; 
 }

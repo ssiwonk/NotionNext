@@ -461,3 +461,44 @@ mark,
 [class*="border-green-500"] {
   border-color: #3182ce !important;
 }
+
+/* =======================================================
+   5. 우측 하단 상단 이동(Scroll to Top) 버튼 디자인 보정
+   ======================================================= */
+/* 찌그러진 사각형 박스를 동그랗고 깔끔한 파란색 버튼으로 대수술 */
+div.fixed.bottom-4.right-4,
+div.fixed.bottom-10.right-10,
+div.fixed.bottom-12.right-6,
+[class*="fixed"][class*="bottom-"][class*="right-"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #3182ce !important; /* 배경을 우리 테마에 맞춘 파란색으로 */
+    border: none !important; /* 깨져서 보이는 지저분한 선 제거 */
+    border-radius: 50% !important; /* 각진 모양에서 예쁜 원형 버튼으로 변경 */
+    width: 44px !important;
+    height: 44px !important;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* 마우스 올렸을 때 자연스럽게 슥 떠오르는 호버 효과 */
+div.fixed.bottom-4.right-4:hover,
+div.fixed.bottom-10.right-10:hover,
+div.fixed.bottom-12.right-6:hover {
+    background-color: #2b6cb0 !important; /* 조금 더 진한 파란색 */
+    transform: translateY(-3px) !important;
+}
+
+/* 내부의 깨진 아이콘/SVG 화살표를 하얗고 선명하게 정중앙 정렬 */
+div.fixed.bottom-4.right-4 i, div.fixed.bottom-4.right-4 svg,
+div.fixed.bottom-10.right-10 i, div.fixed.bottom-10.right-10 svg,
+div.fixed.bottom-12.right-6 i, div.fixed.bottom-12.right-6 svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    font-size: 16px !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+}

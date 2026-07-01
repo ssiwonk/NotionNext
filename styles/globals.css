@@ -324,3 +324,12 @@ p, span, .notion-text, .gitbook-content div {
     font-size: 1.1em !important; 
     line-height: 1.7 !important; 
 }
+/* 5. 우측 하단 라이브2D 펫 캐릭터(강아지) 영구 박멸 */
+#live2d, 
+canvas#live2d, 
+[id*="live2d"], 
+.live2d { 
+    display: none !important; 
+    visibility: hidden !important;
+    pointer-events: none !important;
+}

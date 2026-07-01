@@ -295,7 +295,7 @@ img {
 }
 
 /* ==========================================
-    도움말 센터 커스텀 스타일 (정밀 수정 완료)
+    도움말 센터 커스텀 스타일 (최종 보정본)
    ========================================== */
 
 /* 1. 하단/사이드바 저작권 푸터 완전 삭제 */
@@ -314,7 +314,7 @@ body, h1, h2, h3, h4, h5, h6, input, textarea, select {
     font-family: 'Nanum Gothic', sans-serif !important; 
 }
 
-/* 4. 본문 크기 최적화 및 리스트/콜아웃 간격 조정 */
+/* 4. 본문 크기 최적화 및 리스트 중첩 여백 버그 해결 */
 .notion-text, p, .gitbook-content p { 
     font-size: 16px !important; 
     line-height: 1.8 !important; 
@@ -322,26 +322,36 @@ body, h1, h2, h3, h4, h5, h6, input, textarea, select {
     margin-bottom: 0.5rem !important;
 }
 
-/* 리스트(글머리 기호) 상하 간격 축소 및 줄간격 확보 */
+/* 글머리 기호(리스트) 줄간격을 촘촘하고 예쁘게 대수술 */
 ul li, ol li, .notion-list-item {
-    margin-top: 0.2rem !important;
-    margin-bottom: 0.2rem !important;
-    line-height: 1.7 !important;
+    margin-top: 0.15rem !important;
+    margin-bottom: 0.15rem !important;
+    line-height: 1.5 !important;
     font-size: 16px !important;
 }
 
-/* 콜아웃 내부 줄간격 널널하게 보정 */
+/* ★ [핵심 치트키] 리스트 내부로 파고든 본문 텍스트 마진을 전면 강제 제로화 ★ */
+ul li p, ol li p, 
+ul li .notion-text, ol li .notion-text, 
+.notion-list-item p, .notion-list-item .notion-text {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+}
+
+/* 콜아웃 내부 줄간격 보정 */
 .notion-callout, .notion-callout-text, [class*="callout"] {
     line-height: 1.8 !important;
 }
 
-/* 5. 노션 페이지간 링크 크기가 너무 커지는 현상 다운사이징 */
+/* 5. 노션 페이지간 링크 크기 다운사이징 */
 .notion-page-link, a[class*="page-link"], .notion-page-shortcut {
     font-size: 15px !important;
     font-weight: 500 !important;
 }
 
-/* 6. 인용문구 및 수학공식 글자 크기 폭발 버그 정상화 */
+/* 6. 인용문구 및 수학공식 글자 크기 버그 정상화 */
 .notion-quote, blockquote, .notion-quote-text {
     font-size: 15px !important;
     line-height: 1.7 !important;
@@ -353,13 +363,13 @@ ul li, ol li, .notion-list-item {
     font-size: inherit !important; 
 }
 
-/* 7. [추가] 표(Table) 테두리 선 선명하게 고정 (진한 회색) */
+/* 7. 표(Table) 테두리 선 진하게 고정 */
 .notion-table, 
 .notion-table-cell, 
 .notion-table-th, 
 .notion-table-td,
 table, th, td {
-    border-color: #4b5563 !important; /* 선명한 진한 회색 */
+    border-color: #4b5563 !important; 
 }
 
 /* 8. 우측 하단 라이브2D 펫 캐릭터(강아지) 영구 박멸 */

@@ -64,7 +64,7 @@ nav {
 }
 
 .shadow-text { 
-  text-shadow: 0.1.05em 0.1.05em 0.2em black; 
+  text-shadow: 0.1px 0.05em 0.1px 0.05em 0.2em black; 
 }
 
 .notion-code-copy-button > svg { 
@@ -465,7 +465,10 @@ mark,
 /* =======================================================
    5. 우측 하단 상단 이동(Scroll to Top) 버튼 안전하게 제거
    ======================================================= */
-/* [안전 교정] 다른 모바일 메뉴(카탈로그 등)를 무차별적으로 건드리지 않도록 정확한 타겟 클래스만 저격 */
+/* [해결] 고유 ID인 #jump-to-top과 관련 아이콘 잔상을 완벽 추적하여 완전히 삭제 */
+#jump-to-top,
+div[id="jump-to-top"],
+.fa-chevron-up,
 div.fixed.bottom-4.right-4,
 div.fixed.bottom-10.right-10,
 div.fixed.bottom-12.right-6 {
@@ -476,18 +479,41 @@ div.fixed.bottom-12.right-6 {
 }
 
 /* =======================================================
+   6. 알골리아 검색창 중국어 하드코딩 완전 박멸 및 슬림화
+   ======================================================= */
+.text-blue-600, [class*="modal"] h2, [class*="search"] div.text-blue-600 {
+    font-size: 0px !important;
+}
+.text-blue-600::before, [class*="modal"] h2::before, [class*="search"] div.text-blue-600::before {
+    content: "검색" !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: #3182ce !important;
+}
+input::-webkit-input-placeholder, input::-moz-placeholder, input:-ms-input-placeholder, input::placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+}
+div.flex.justify-between.items-center.p-4, div.flex.justify-between.text-sm, [class*="modal"] div.border-t {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* =======================================================
    7. 모바일 화면 전용 우측 하단 플로팅 검색 버튼 안전 활성화
    ======================================================= */
 @media (max-width: 767px) {
-    /* 카탈로그 메뉴와 충돌하지 않도록 모바일 검색 버튼 고유의 클래스 라인만 안전하게 노출 */
-    header div.hidden.md\:block,
-    nav div.hidden.md\:block,
-    header .md\:flex.hidden,
-    nav .md\:flex.hidden,
+    /* [해결] 부모 태그 규격을 일반 태그인 #top-nav 구조로 전면 수정하여 검색 요소 강제 구출 */
+    #top-nav div.hidden.md\:block,
+    #top-nav div.md\:block.hidden,
+    #top-nav .md\:flex.hidden,
+    #top-nav .hidden.md\:flex,
+    #top-nav [class*="search"],
     [class*="AlgoliaSearchButton"] {
         display: flex !important;
         position: fixed !important;
-        bottom: 24px !important; /* 스마트폰 우측 하단 여백 설정 */
+        bottom: 24px !important; /* 스마트폰 우측 하단 안착 */
         right: 24px !important;
         z-index: 40 !important;
         background-color: #3182ce !important; /* 우리 테마 파란색 */
@@ -500,14 +526,21 @@ div.fixed.bottom-12.right-6 {
         cursor: pointer !important;
     }
 
-    /* 원형 버튼 디자인을 위해 텍스트 잔상 숨김 */
-    header div.hidden.md\:block span, header div.hidden.md\:block kbd, header div.hidden.md\:block input,
-    [class*="AlgoliaSearchButton"] span, [class*="AlgoliaSearchButton"] kbd {
+    /* 원형 버튼 디자인을 위해 글자 잔상 차단 */
+    #top-nav div.hidden.md\:block span, 
+    #top-nav div.hidden.md\:block kbd, 
+    #top-nav div.hidden.md\:block input,
+    #top-nav [class*="search"] span,
+    #top-nav [class*="search"] kbd,
+    #top-nav [class*="search"] input,
+    [class*="AlgoliaSearchButton"] span, 
+    [class*="AlgoliaSearchButton"] kbd {
         display: none !important;
     }
 
-    /* 돋보기 아이콘 백색 정중앙 정렬 */
-    header div.hidden.md\:block i, header div.hidden.md\:block svg,
+    /* 돋보기 아이콘을 백색으로 만들어 정중앙 정렬 */
+    #top-nav div.hidden.md\:block i, #top-nav div.hidden.md\:block svg,
+    #top-nav [class*="search"] i, #top-nav [class*="search"] svg,
     [class*="AlgoliaSearchButton"] i, [class*="AlgoliaSearchButton"] svg {
         color: #ffffff !important;
         fill: #ffffff !important;

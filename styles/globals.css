@@ -34,6 +34,8 @@ html {
 
 .header-name { 
   overflow: hidden; 
+  text-overflow: ellipsis; /* 넘치는 글자를 말줄임표(...)로 처리 */
+  white-space: nowrap;     /* 어떤 상황에서도 글자가 아래로 줄바꿈되지 않도록 강제 고정 */
 }
 
 .sticky-nav-full .nav { 

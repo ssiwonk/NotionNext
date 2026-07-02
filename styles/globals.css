@@ -478,22 +478,18 @@ div.fixed.bottom-12.right-6 {
     pointer-events: none !important;
 }
 
+
 /* =======================================================
-   6. 알골리아 검색창 중국어 하드코딩 완전 박멸 및 슬림화
+   6. 알골리아 검색창 내부 구조 슬림화
    ======================================================= */
-.text-blue-600, [class*="modal"] h2, [class*="search"] div.text-blue-600 {
-    font-size: 0px !important;
-}
-.text-blue-600::before, [class*="modal"] h2::before, [class*="search"] div.text-blue-600::before {
-    content: "검색" !important;
-    font-size: 1.25rem !important;
-    font-weight: 700 !important;
-    color: #3182ce !important;
-}
+/* [복구] PC 메뉴를 지워버리던 위험한 .text-blue-600 글자 삭제 코드는 완전히 폐기했습니다. */
+
+/* 입력창 내부의 기본 안내문구 투명하게 격리 */
 input::-webkit-input-placeholder, input::-moz-placeholder, input:-ms-input-placeholder, input::placeholder {
     color: transparent !important;
     opacity: 0 !important;
 }
+/* 하단의 불필요한 단축키 가이드 바 완전 차단 */
 div.flex.justify-between.items-center.p-4, div.flex.justify-between.text-sm, [class*="modal"] div.border-t {
     display: none !important;
     visibility: hidden !important;
@@ -501,10 +497,10 @@ div.flex.justify-between.items-center.p-4, div.flex.justify-between.text-sm, [cl
 }
 
 /* =======================================================
-    7. 모바일 화면 전용 우측 하단 플로팅 검색 버튼 안전 활성화 (위치 상향)
+   7. 모바일 화면 전용 상단 네비게이션 바 검색 버튼 자연스럽게 삽입
    ======================================================= */
 @media (max-width: 767px) {
-    /* 하단 탭 바(Article List / Catalog)를 피해 위치를 위로 올림 (24px -> 80px) */
+    /* [해결] 둥둥 떠다니던 플로팅(fixed)을 해제하고, 모바일 상단 바(#top-nav) 내부에 자연스럽게 정렬 */
     #top-nav div.hidden.md\:block,
     #top-nav div.md\:block.hidden,
     #top-nav .md\:flex.hidden,
@@ -512,21 +508,21 @@ div.flex.justify-between.items-center.p-4, div.flex.justify-between.text-sm, [cl
     #top-nav [class*="search"],
     [class*="AlgoliaSearchButton"] {
         display: flex !important;
-        position: fixed !important;
-        bottom: 80px !important; /* 여기를 80px로 올려 하단 메뉴와 겹치지 않게 수정 */
-        right: 24px !important;
-        z-index: 40 !important;
-        background-color: #3182ce !important; /* 우리 테마 파란색 */
-        width: 48px !important;
-        height: 48px !important;
-        border-radius: 50% !important; /* 예쁜 원형 버튼 */
+        position: relative !important; /* 플로팅 해제 및 제자리 정렬 */
+        bottom: auto !important;
+        right: auto !important;
+        background-color: transparent !important; /* 지저분한 파란 원형 배경 제거 */
+        box-shadow: none !important; /* 그림자 제거 */
+        width: auto !important;
+        height: auto !important;
+        padding: 0 10px !important; /* 아이콘 터치 영역 패딩 */
+        margin-left: auto !important; /* 우측 정렬 유도 */
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.2) !important;
         cursor: pointer !important;
     }
 
-    /* 원형 버튼 디자인을 위해 글자 잔상 차단 */
+    /* 원형 버튼용 글자 잔상들(Search, Ctrl+K 등)은 모바일 상단바를 위해 깔끔하게 숨김 */
     #top-nav div.hidden.md\:block span, 
     #top-nav div.hidden.md\:block kbd, 
     #top-nav div.hidden.md\:block input,
@@ -538,13 +534,13 @@ div.flex.justify-between.items-center.p-4, div.flex.justify-between.text-sm, [cl
         display: none !important;
     }
 
-    /* 돋보기 아이콘을 백색으로 만들어 정중앙 정렬 */
+    /* 돋보기 아이콘을 상단바 테마 색상에 맞춰 자연스럽게 노출 */
     #top-nav div.hidden.md\:block i, #top-nav div.hidden.md\:block svg,
     #top-nav [class*="search"] i, #top-nav [class*="search"] svg,
     [class*="AlgoliaSearchButton"] i, [class*="AlgoliaSearchButton"] svg {
-        color: #ffffff !important;
-        fill: #ffffff !important;
-        font-size: 18px !important;
+        color: inherit !important; /* 상단바 글자색(블랙/화이트)을 자동으로 따라감 */
+        fill: currentColor !important;
+        font-size: 20px !important;
         margin: 0 !important;
         display: block !important;
     }

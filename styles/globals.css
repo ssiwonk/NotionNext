@@ -463,17 +463,56 @@ mark,
 }
 
 /* =======================================================
-   5. 우측 하단 상단 이동(Scroll to Top) 버튼 디자인 및 기능 완벽 보정 (폐기 및 제거)
+   5. 우측 하단 상단 이동(Scroll to Top) 버튼 안전하게 제거
    ======================================================= */
-/* [폐기] 모양 보정 및 기능 복구 코드 (image_23.png 참조)는 모두 제거합니다. */
-
-/* [사용자 요청] 작동하지 않는 스크롤 버튼 자체를 완전히 제거합니다. */
+/* [안전 교정] 다른 모바일 메뉴(카탈로그 등)를 무차별적으로 건드리지 않도록 정확한 타겟 클래스만 저격 */
 div.fixed.bottom-4.right-4,
 div.fixed.bottom-10.right-10,
-div.fixed.bottom-12.right-6,
-[class*="fixed"][class*="bottom-"][class*="right-"] {
-    display: none !important; /* [사용자 요청] 요소를 완전히 제거하여 보이지 않게 합니다. */
+div.fixed.bottom-12.right-6 {
+    display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
-    pointer-events: none !important; /* 혹시나 숨겨진 요소가 클릭되지 않도록 방지 */
+    pointer-events: none !important;
+}
+
+/* =======================================================
+   7. 모바일 화면 전용 우측 하단 플로팅 검색 버튼 안전 활성화
+   ======================================================= */
+@media (max-width: 767px) {
+    /* 카탈로그 메뉴와 충돌하지 않도록 모바일 검색 버튼 고유의 클래스 라인만 안전하게 노출 */
+    header div.hidden.md\:block,
+    nav div.hidden.md\:block,
+    header .md\:flex.hidden,
+    nav .md\:flex.hidden,
+    [class*="AlgoliaSearchButton"] {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 24px !important; /* 스마트폰 우측 하단 여백 설정 */
+        right: 24px !important;
+        z-index: 40 !important;
+        background-color: #3182ce !important; /* 우리 테마 파란색 */
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 50% !important; /* 예쁜 원형 버튼 */
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.2) !important;
+        cursor: pointer !important;
+    }
+
+    /* 원형 버튼 디자인을 위해 텍스트 잔상 숨김 */
+    header div.hidden.md\:block span, header div.hidden.md\:block kbd, header div.hidden.md\:block input,
+    [class*="AlgoliaSearchButton"] span, [class*="AlgoliaSearchButton"] kbd {
+        display: none !important;
+    }
+
+    /* 돋보기 아이콘 백색 정중앙 정렬 */
+    header div.hidden.md\:block i, header div.hidden.md\:block svg,
+    [class*="AlgoliaSearchButton"] i, [class*="AlgoliaSearchButton"] svg {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+        font-size: 18px !important;
+        margin: 0 !important;
+        display: block !important;
+    }
 }

@@ -45,22 +45,20 @@ const AlgoliaSearchModal = dynamic(
 )
 const WWAds = dynamic(() => import('@/components/WWAds'), { ssr: false })
 
-// 主题全局变量
+// 테마 전역 변수
 const ThemeGlobalGitbook = createContext()
 export const useGitBookGlobal = () => useContext(ThemeGlobalGitbook)
 
 /**
- * 给最新的文章标一个红点
+ * 최신 글에 빨간 점 표시
  */
 function getNavPagesWithLatest(allNavPages, latestPosts, post) {
-  // localStorage 保存id和上次阅读时间戳： posts_read_time = {"${post.id}":"Date()"}
   const postReadTime = JSON.parse(
     localStorage.getItem('post_read_time') || '{}'
   )
   if (post) {
     postReadTime[getShortId(post.id)] = new Date().getTime()
   }
-  // 更新
   localStorage.setItem('post_read_time', JSON.stringify(postReadTime))
 
   return allNavPages?.map(item => {
@@ -76,7 +74,6 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
       pageIcon: item.pageIcon || '',
       lastEditedDate: item.lastEditedDate
     }
-    // 属于最新文章通常6篇 && (无阅读记录 || 最近更新时间大于上次阅读时间)
     if (
       latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
       (!postReadTime[item.short_id] ||
@@ -90,8 +87,8 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
 }
 
 /**
- * 基础布局
- * 采用左右两侧布局，移动端使用顶部导航栏
+ * 기본 레이아웃
+ * 좌우 측면 레이아웃 채택, 모바일 기기는 상단 네비게이션 바 사용
  * @returns {JSX.Element}
  * @constructor
  */
@@ -114,7 +111,29 @@ const LayoutBase = props => {
   const searchModal = useRef(null)
 
   useEffect(() => {
-    setFilteredNavPages(getNavPagesWithLatest(allNavPages, latestPosts, post))
+    // 1. 현재 사용자가 브라우저 주소창에 치고 들어온 도메인을 실시간 감지
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
+    
+    // 2. 기본 최신글 마킹 데이터 생성
+    let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
+    
+    // 3. [💡 도메인별 분류 요구사항 반영] 접속 주소에 따라 왼쪽 사이드바 메뉴 트리 필터링
+    pages = pages?.filter(item => {
+      // scucontentspost 도메인으로 접근한 경우 ➡️ 오직 'scu' 태그가 포함된 글만 메뉴판에 노출
+      if (currentHost.includes('scucontentspost')) {
+        return item.tags?.includes('scu')
+      }
+      
+      // ssiwonkdocs 도메인으로 접근한 경우 ➡️ 태그 여부 관계없이 무조건 모두 노출
+      if (currentHost.includes('ssiwonkdocs')) {
+        return true
+      }
+      
+      // 그 외 기본 환경 (예: 로컬 테스트 주소 localhost 등) ➡️ 모두 노출
+      return true
+    })
+
+    setFilteredNavPages(pages)
   }, [router])
 
   const GITBOOK_LOADING_COVER = siteConfig(
@@ -141,31 +160,31 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 顶部导航栏 */}
+        {/* 상단 네비게이션 바 */}
         <Header {...props} />
 
         <main
           id='wrapper'
           className={`${siteConfig('LAYOUT_SIDEBAR_REVERSE') ? 'flex-row-reverse' : ''} relative flex justify-between w-full gap-x-6 h-full mx-auto max-w-screen-4xl`}>
-          {/* 左侧推拉抽屉 */}
+          {/* 왼쪽 사이드바 메뉴판 */}
           {fullWidth ? null : (
             <div className={'hidden md:block relative z-10 '}>
               <div className='w-80 pt-14 pb-4 sticky top-0 h-screen flex justify-between flex-col'>
-                {/* 导航 */}
+                {/* 네비게이션 */}
                 <div className='overflow-y-scroll scroll-hidden pt-10 pl-5'>
-                  {/* 嵌入 */}
+                  {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 所有文章列表 */}
+                  {/* 전체 글 목록 */}
                   <NavPostList filteredNavPages={filteredNavPages} {...props} />
                 </div>
-                {/* 页脚 */}
+                {/* 푸터 */}
                 <Footer {...props} />
               </div>
             </div>
           )}
 
-          {/* 中间内容区域 */}
+          {/* 중앙 콘텐츠 영역 */}
           <div
             id='center-wrapper'
             className='flex flex-col justify-between w-full relative z-10 pt-14 min-h-screen'>
@@ -177,18 +196,18 @@ const LayoutBase = props => {
 
               {children}
 
-              {/* Google广告 */}
+              {/* 구글 광고 */}
               <AdSlot type='in-article' />
               <WWAds className='w-full' orientation='horizontal' />
             </div>
 
-            {/* 底部 */}
+            {/* 하단 (모바일 전용) */}
             <div className='md:hidden'>
               <Footer {...props} />
             </div>
           </div>
 
-          {/*  右侧 */}
+          {/* 우측 사이드바 */}
           {fullWidth ? null : (
             <div
               className={
@@ -198,7 +217,7 @@ const LayoutBase = props => {
                 <ArticleInfo post={props?.post ? props?.post : props.notice} />
 
                 <div>
-                  {/* 桌面端目录 */}
+                  {/* 데스크톱 본문 목차 (TOC) */}
                   <Catalog {...props} />
                   {slotRight}
                   {router.route === '/' && (
@@ -212,7 +231,7 @@ const LayoutBase = props => {
                       <Live2D />
                     </>
                   )}
-                  {/* gitbook主题首页只显示公告 */}
+                  {/* 깃북 테마 메인 화면에는 공지사항만 표시 */}
                   <Announcement {...props} />
                 </div>
 
@@ -225,13 +244,13 @@ const LayoutBase = props => {
 
         {GITBOOK_LOADING_COVER && <LoadingCover />}
 
-        {/* 回顶按钮 */}
+        {/* 상단 이동 버튼 */}
         <JumpToTopButton />
 
-        {/* 移动端导航抽屉 */}
+        {/* 모바일 네비게이션 드로어 */}
         <PageNavDrawer {...props} filteredNavPages={filteredNavPages} />
 
-        {/* 移动端底部导航栏 */}
+        {/* 모바일 하단 메뉴 바 */}
         <BottomMenuBar {...props} />
       </div>
     </ThemeGlobalGitbook.Provider>
@@ -239,38 +258,34 @@ const LayoutBase = props => {
 }
 
 /**
- * 首页
- * 重定向到某个文章详情页
+ * 메인 화면 (Index)
+ * 특정 문서 상세 페이지로 리다이렉트 처리
  * @param {*} props
  * @returns
  */
 const LayoutIndex = props => {
   const router = useRouter()
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
-  const [hasRedirected, setHasRedirected] = useState(false) // 添加状态追踪是否已重定向
+  const [hasRedirected, setHasRedirected] = useState(false)
 
   useEffect(() => {
     const tryRedirect = async () => {
       if (!hasRedirected) {
-        // 仅当未重定向时执行
-        setHasRedirected(true) // 更新状态，防止多次执行
+        setHasRedirected(true)
 
-        // 重定向到指定文章
         await router.push(index)
 
-        // 使用setTimeout检查页面加载情况
         setTimeout(() => {
           const article = document.querySelector(
             '#article-wrapper #notion-article'
           )
           if (!article) {
-            console.log('请检查您的Notion数据库中是否包含此slug页面： ', index)
+            console.log('노션 데이터베이스에 해당 slug 페이지가 있는지 확인해 주세요: ', index)
 
-            // 显示错误信息
             const containerInner = document.querySelector(
               '#theme-gitbook #container-inner'
             )
-            const newHTML = `<h1 class="text-3xl pt-12 dark:text-gray-300">配置有误</h1><blockquote class="notion-quote notion-block-ce76391f3f2842d386468ff1eb705b92"><div>请在您的notion中添加一个slug为${index}的文章</div></blockquote>`
+            const newHTML = `<h1 class="text-3xl pt-12 dark:text-gray-300">설정 오류</h1><blockquote class="notion-quote notion-block-ce76391f3f2842d386468ff1eb705b92"><div>노션(Notion) 데이터베이스에 slug가 ${index}인 문서를 추가해 주세요.</div></blockquote>`
             containerInner?.insertAdjacentHTML('afterbegin', newHTML)
           }
         }, 2000)
@@ -278,19 +293,19 @@ const LayoutIndex = props => {
     }
 
     if (index) {
-      console.log('重定向', index)
+      console.log('리다이렉트', index)
       tryRedirect()
     } else {
-      console.log('无重定向', index)
+      console.log('리다이렉트 없음', index)
     }
-  }, [index, hasRedirected]) // 将 hasRedirected 作为依赖确保状态变更时更新
+  }, [index, hasRedirected])
 
-  return null // 不渲染任何内容
+  return null
 }
 
 /**
- * 文章列表 无
- * 全靠页面导航
+ * 글 목록 (사용 안 함)
+ * 페이지 네비게이션으로 대체 처리
  * @param {*} props
  * @returns
  */
@@ -299,14 +314,13 @@ const LayoutPostList = props => {
 }
 
 /**
- * 文章详情
+ * 글 상세 페이지 (Slug)
  * @param {*} props
  * @returns
  */
 const LayoutSlug = props => {
   const { post, prev, next, siteInfo, lock, validPassword } = props
   const router = useRouter()
-  // 如果是文档首页文章，则修改浏览器标签
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
   const basePath = router.asPath.split('?')[0]
   const title =
@@ -315,8 +329,19 @@ const LayoutSlug = props => {
       : `${post?.title} | ${siteInfo?.title}`
 
   const waiting404 = siteConfig('POST_WAITING_TIME_FOR_404') * 1000
+  
   useEffect(() => {
-    // 404
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
+    
+    // [💡 안전 가드레일] scucontentspost 도메인인데 'scu' 태그가 없는 글 주소로 직접 우회 접속 시 404 차단
+    if (post) {
+      if (currentHost.includes('scucontentspost') && !post.tags?.includes('scu')) {
+        router.push('/404')
+        return
+      }
+    }
+
+    // 기본 404 예외 처리
     if (!post) {
       setTimeout(() => {
         if (isBrowser) {
@@ -325,25 +350,26 @@ const LayoutSlug = props => {
           )
           if (!article) {
             router.push('/404').then(() => {
-              console.warn('找不到页面', router.asPath)
+              console.warn('페이지를 찾을 수 없음', router.asPath)
             })
           }
         }
       }, waiting404)
     }
   }, [post])
+  
   return (
     <>
       <Head>
         <title>{title}</title>
       </Head>
 
-      {/* 文章锁 */}
+      {/* 글 잠금 (비밀번호) */}
       {lock && <ArticleLock validPassword={validPassword} />}
 
       {!lock && (
         <div id='container'>
-          {/* title */}
+          {/* 제목 */}
           <h1 className='text-3xl pt-12  dark:text-gray-300'>
             {siteConfig('POST_TITLE_ICON') && (
               <NotionIcon icon={post?.pageIcon} />
@@ -351,16 +377,17 @@ const LayoutSlug = props => {
             {post?.title}
           </h1>
 
-          {/* Notion文章主体 */}
+          {/* 노션 본문 */}
           {post && (
             <section className='px-1'>
               <div id='article-wrapper'>
                 <NotionPage post={post} />
               </div>
 
-              {/* 分享 */}
+              {/* 공유 */}
               <ShareBar post={post} />
-              {/* 文章分类和标签信息 */}
+              
+              {/* 글 카테고리 및 태그 정보 */}
               <div className='flex justify-between'>
                 {siteConfig('POST_DETAIL_CATEGORY') && post?.category && (
                   <CategoryItem category={post.category} />
@@ -377,14 +404,11 @@ const LayoutSlug = props => {
                 <ArticleAround prev={prev} next={next} />
               )}
 
-              {/* <AdSlot />
-              <WWAds className='w-full' orientation='horizontal' /> */}
-
               <Comment frontMatter={post} />
             </section>
           )}
 
-          {/* 文章目录 */}
+          {/* 글 목차 */}
           <CatalogDrawerWrapper {...props} />
         </div>
       )}
@@ -393,8 +417,8 @@ const LayoutSlug = props => {
 }
 
 /**
- * 没有搜索
- * 全靠页面导航
+ * 검색 화면 (사용 안 함)
+ * 페이지 네비게이션으로 대체 처리
  * @param {*} props
  * @returns
  */
@@ -403,8 +427,8 @@ const LayoutSearch = props => {
 }
 
 /**
- * 归档页面基本不会用到
- * 全靠页面导航
+ * 아카이브(모아보기) 화면 (기본적으로 사용 안 함)
+ * 페이지 네비게이션으로 대체 처리
  * @param {*} props
  * @returns
  */
@@ -427,7 +451,7 @@ const LayoutArchive = props => {
 }
 
 /**
- * 404 页面
+ * 404 페이지
  * @param {*} props
  * @returns
  */
@@ -435,7 +459,6 @@ const Layout404 = props => {
   const router = useRouter()
   const { locale } = useGlobal()
   useEffect(() => {
-    // 延时3秒如果加载失败就返回首页
     setTimeout(() => {
       const article = isBrowser && document.getElementById('article-wrapper')
       if (!article) {
@@ -464,7 +487,7 @@ const Layout404 = props => {
 }
 
 /**
- * 分类列表
+ * 카테고리 목록
  */
 const LayoutCategoryIndex = props => {
   const { categoryOptions } = props
@@ -501,7 +524,7 @@ const LayoutCategoryIndex = props => {
 }
 
 /**
- * 标签列表
+ * 태그 목록
  */
 const LayoutTagIndex = props => {
   const { tagOptions } = props
@@ -529,7 +552,7 @@ const LayoutTagIndex = props => {
 }
 
 /**
- * 登录页面
+ * 로그인 페이지
  * @param {*} props
  * @returns
  */
@@ -540,7 +563,6 @@ const LayoutSignIn = props => {
   return (
     <>
       <div className='grow mt-20'>
-        {/* clerk预置表单 */}
         {enableClerk && (
           <div className='flex justify-center py-6'>
             <SignIn />
@@ -555,7 +577,7 @@ const LayoutSignIn = props => {
 }
 
 /**
- * 注册页面
+ * 회원가입 페이지
  * @param {*} props
  * @returns
  */
@@ -566,7 +588,6 @@ const LayoutSignUp = props => {
   return (
     <>
       <div className='grow mt-20'>
-        {/* clerk预置表单 */}
         {enableClerk && (
           <div className='flex justify-center py-6'>
             <SignUp />
@@ -581,7 +602,7 @@ const LayoutSignUp = props => {
 }
 
 /**
- * 仪表盘
+ * 대시보드
  * @param {*} props
  * @returns
  */
@@ -601,7 +622,6 @@ const LayoutDashboard = props => {
           </div>
         </div>
       </div>
-      {/* 仪表盘 */}
       <DashboardHeader />
       <DashboardBody />
     </>

@@ -501,10 +501,10 @@ div.flex.justify-between.items-center.p-4, div.flex.justify-between.text-sm, [cl
 }
 
 /* =======================================================
-   7. 모바일 화면 전용 우측 하단 플로팅 검색 버튼 안전 활성화
+    7. 모바일 화면 전용 우측 하단 플로팅 검색 버튼 안전 활성화 (위치 상향)
    ======================================================= */
 @media (max-width: 767px) {
-    /* [해결] 부모 태그 규격을 일반 태그인 #top-nav 구조로 전면 수정하여 검색 요소 강제 구출 */
+    /* 하단 탭 바(Article List / Catalog)를 피해 위치를 위로 올림 (24px -> 80px) */
     #top-nav div.hidden.md\:block,
     #top-nav div.md\:block.hidden,
     #top-nav .md\:flex.hidden,
@@ -513,7 +513,7 @@ div.flex.justify-between.items-center.p-4, div.flex.justify-between.text-sm, [cl
     [class*="AlgoliaSearchButton"] {
         display: flex !important;
         position: fixed !important;
-        bottom: 24px !important; /* 스마트폰 우측 하단 안착 */
+        bottom: 80px !important; /* 여기를 80px로 올려 하단 메뉴와 겹치지 않게 수정 */
         right: 24px !important;
         z-index: 40 !important;
         background-color: #3182ce !important; /* 우리 테마 파란색 */

@@ -68,6 +68,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
       pageCoverThumbnail: item.pageCoverThumbnail || '',
       category: item.category || null,
       tags: item.tags || null,
+      tagItems: item.tagItems || null,
       summary: item.summary || null,
       slug: item.slug,
       href: item.href,
@@ -117,24 +118,24 @@ const LayoutBase = props => {
     // 2. 기본 최신글 마킹 데이터 생성
     let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
     
-    // 3. [💡 도메인별 분류 요구사항 반영] 접속 주소에 따라 왼쪽 사이드바 메뉴 트리 필터링
+    // 3. [💡 1중 방어: 완벽한 태그 매칭 기법] 주소에 따라 메뉴판 강제 필터링
     pages = pages?.filter(item => {
-      // scucontentspost 도메인으로 접근한 경우 ➡️ 오직 'scu' 태그가 포함된 글만 메뉴판에 노출
       if (currentHost.includes('scucontentspost')) {
-        return item.tags?.includes('scu')
+        // 문자열 배열(tags)과 객체 배열(tagItems)을 모두 양방향 조사하여 'scu'가 있는지 철저히 검증
+        const hasScuTag = item.tags?.includes('scu') || 
+                           item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+        return hasScuTag
       }
       
-      // ssiwonkdocs 도메인으로 접근한 경우 ➡️ 태그 여부 관계없이 무조건 모두 노출
       if (currentHost.includes('ssiwonkdocs')) {
-        return true
+        return true // ssiwonkdocs 도메인은 무조건 전부 노출
       }
       
-      // 그 외 기본 환경 (예: 로컬 테스트 주소 localhost 등) ➡️ 모두 노출
       return true
     })
 
     setFilteredNavPages(pages)
-  }, [router])
+  }, [router, allNavPages])
 
   const GITBOOK_LOADING_COVER = siteConfig(
     'GITBOOK_LOADING_COVER',
@@ -149,7 +150,7 @@ const LayoutBase = props => {
         changeTocVisible,
         filteredNavPages,
         setFilteredNavPages,
-        allNavPages,
+        allNavPages: filteredNavPages, // [💡 2중 방어] 하위 컴포넌트가 원본 데이터를 요구해도 무조건 필터링된 데이터만 주도록 장악
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -175,8 +176,8 @@ const LayoutBase = props => {
                   {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 전체 글 목록 */}
-                  <NavPostList filteredNavPages={filteredNavPages} {...props} />
+                  {/* 전체 글 목록 (props로 원본을 달라고 떼써도 무조건 걸러진 목록만 주입) */}
+                  <NavPostList filteredNavPages={filteredNavPages} {...props} allNavPages={filteredNavPages} />
                 </div>
                 {/* 푸터 */}
                 <Footer {...props} />
@@ -247,8 +248,8 @@ const LayoutBase = props => {
         {/* 상단 이동 버튼 */}
         <JumpToTopButton />
 
-        {/* 모바일 네비게이션 드로어 */}
-        <PageNavDrawer {...props} filteredNavPages={filteredNavPages} />
+        {/* 모바일 네비게이션 드로어 (모바일 서랍 메뉴도 필터링된 데이터만 넘겨줌) */}
+        <PageNavDrawer {...props} filteredNavPages={filteredNavPages} allNavPages={filteredNavPages} />
 
         {/* 모바일 하단 메뉴 바 */}
         <BottomMenuBar {...props} />
@@ -333,9 +334,12 @@ const LayoutSlug = props => {
   useEffect(() => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
-    // [💡 안전 가드레일] scucontentspost 도메인인데 'scu' 태그가 없는 글 주소로 직접 우회 접속 시 404 차단
+    // [💡 본문 직접 주소 접근 방어선] scucontentspost 도메인인데 'scu' 태그가 없는 글 주소로 직접 치고 들어오면 404 차단
     if (post) {
-      if (currentHost.includes('scucontentspost') && !post.tags?.includes('scu')) {
+      const hasScuTag = post.tags?.includes('scu') || 
+                        post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+                        
+      if (currentHost.includes('scucontentspost') && !hasScuTag) {
         router.push('/404')
         return
       }

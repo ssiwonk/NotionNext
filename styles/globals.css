@@ -340,11 +340,11 @@ ol li,
   font-size: 1.2rem !important;
 }
 
-/* [콜아웃] 본문 내부의 콜아웃만 본문 서식과 완벽하게 통일 (사이드바 제외) */
-.gitbook-content .notion-callout-text,
-.gitbook-content .notion-callout-text * {
-    line-height: 1.8 !important;    /* 본문 기본 줄간격(1.8)과 똑같이 맞춰 통일감 부여 */
-    font-size: 1.1rem !important;  
+/* [콜아웃] 본문 메인 영역의 콜아웃만 줄간격 및 글자크기 최적화 (사이드바 제외) */
+main.notion .notion-callout-text,
+main.notion .notion-callout-text * {
+    line-height: 1.8 !important;    /* 글자 겹침 현상을 완벽히 막고, 본문과 가장 잘 어울리는 단정한 줄간격 */
+    font-size: 1.1rem !important;  /* 주변 일반 본문 글자들과 이질감 없이 딱 맞아떨어지는 크기 */
 }
 
 /* [페이지 링크] 본문 내 다른 노션 페이지 연결 위젯 크기 조절 */

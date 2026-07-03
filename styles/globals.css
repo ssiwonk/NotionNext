@@ -320,7 +320,7 @@ body, h1, h2, h3, h4, h5, h6, input, textarea, select {
 p, 
 .gitbook-content p { 
   font-size: 1.2rem !important; 
-  line-height: 1.8 !important; 
+  line-height: 1.7 !important; 
   margin-top: 0.5rem !important; 
   margin-bottom: 0.1rem !important;
 }
@@ -336,14 +336,14 @@ ol li,
   padding-bottom: 0px !important;
   
   /* 2. 리스트 '하나' 내부에서 글자가 두 줄이 될 때의 줄간격 */
-  line-height: 1.8 !important;  
+  line-height: 1.7 !important;  
   font-size: 1.2rem !important;
 }
 
 /* [콜아웃] 본문 메인 영역의 콜아웃만 줄간격 및 글자크기 최적화 (사이드바 제외) */
 main.notion .notion-callout-text,
 main.notion .notion-callout-text * {
-    line-height: 1.8 !important;    /* 글자 겹침 현상을 완벽히 막고, 본문과 가장 잘 어울리는 단정한 줄간격 */
+    line-height: 1.7 !important;    /* 글자 겹침 현상을 완벽히 막고, 본문과 가장 잘 어울리는 단정한 줄간격 */
     font-size: 1.1rem !important;  /* 주변 일반 본문 글자들과 이질감 없이 딱 맞아떨어지는 크기 */
 }
 
@@ -360,7 +360,7 @@ a[class*="page-link"],
 blockquote, 
 .notion-quote-text {
   font-size: 1.1rem !important; 
-  line-height: 1.8 !important; 
+  line-height: 1.7 !important; 
 }
 
 /* [수학공식] 수식이 비정상적으로 거대해지던 중첩 버그 차단 */
@@ -480,4 +480,24 @@ div.fixed.bottom-12.right-6 {
 body, .notion, .notion-page {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", sans-serif !important;
     letter-spacing: -0.03em; /* 자간을 살짝 좁혀주면 이미지처럼 훨씬 깔끔해집니다 */
+}
+
+/* ==========================================
+    6. 접기 블록(토글) 및 표(테이블) 글자 크기 최적화
+   ========================================== */
+
+/* [접기 블록] 토글 제목(summary) 및 내부 접힌 텍스트 크기 일괄 보정 */
+main.notion details.notion-toggle,
+main.notion details.notion-toggle summary,
+main.notion details.notion-toggle * {
+    font-size: 1.1rem !important;
+}
+
+/* [표] 일반 테이블 및 심플 테이블 내부의 모든 텍스트 크기 보정 */
+main.notion .notion-simple-table,
+main.notion .notion-simple-table-cell,
+main.notion table th,
+main.notion table td,
+main.notion table td * {
+    font-size: 1.1rem !important;
 }

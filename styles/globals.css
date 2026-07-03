@@ -340,11 +340,12 @@ ol li,
   font-size: 1.2rem !important;
 }
 
-/* [콜아웃] 내부 텍스트 줄간격 여유롭게 보정 */
-.notion-callout, 
-.notion-callout-text, 
-[class*="callout"] { 
-  line-height: 2.0 !important; 
+/* [콜아웃] 내부 텍스트 줄간격 여유롭게 보정 (오류 교정 버전) */
+.notion-callout-text,
+.notion-callout-text .notion-text,
+.notion-callout-text p {
+    line-height: 1.8 !important; /* 본문 기본 줄간격(1.8)과 통일하여 버그를 해결합니다 */
+    font-size: 1.1rem !important; 
 }
 
 /* [페이지 링크] 본문 내 다른 노션 페이지 연결 위젯 크기 조절 */

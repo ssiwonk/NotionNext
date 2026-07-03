@@ -490,7 +490,7 @@ body, .notion, .notion-page {
 main.notion details.notion-toggle,
 main.notion details.notion-toggle summary,
 main.notion details.notion-toggle * {
-    font-size: 1.1rem !important;
+    font-size: 1.2rem !important;
 }
 
 /* [표] 일반 테이블 및 심플 테이블 내부의 모든 텍스트 크기 보정 */

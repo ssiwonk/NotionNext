@@ -340,12 +340,11 @@ ol li,
   font-size: 1.2rem !important;
 }
 
-/* [콜아웃] 내부 텍스트 줄간격 여유롭게 보정 (오류 교정 버전) */
+/* [콜아웃] 내부 텍스트 및 모든 자식 요소 줄간격 강제 보정 */
 .notion-callout-text,
-.notion-callout-text .notion-text,
-.notion-callout-text p {
-    line-height: 1.8 !important; /* 본문 기본 줄간격(1.8)과 통일하여 버그를 해결합니다 */
-    font-size: 1.1rem !important; 
+.notion-callout-text * {
+    line-height: 2.0 !important;  /* 1.8보다 조금 더 시원하게 2.0으로 확실히 벌려줍니다 */
+    font-size: 1.1rem !important; /* rem 단위라 모든 자식에게 중첩 없이 깔끔하게 1.1배로 고정됩니다 */
 }
 
 /* [페이지 링크] 본문 내 다른 노션 페이지 연결 위젯 크기 조절 */

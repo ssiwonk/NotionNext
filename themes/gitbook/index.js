@@ -73,7 +73,8 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
       slug: item.slug,
       href: item.href,
       pageIcon: item.pageIcon || '',
-      lastEditedDate: item.lastEditedDate
+      lastEditedDate: item.lastEditedDate,
+      publishDate: item.publishDate || null // 💡 [🔥 원인 해결] NotionNext 내부 엔진은 date 값을 'publishDate'라는 이름으로 수집합니다! 유실 방지 매핑 추가.
     }
     if (
       latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
@@ -115,23 +116,34 @@ const LayoutBase = props => {
     // 1. 현재 사용자가 브라우저 주소창에 치고 들어온 도메인을 실시간 감지
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
-    // 2. 기본 최신글 마킹 데이터 생성
+    // 2. 기본 최신글 및 날짜 데이터 생성
     let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
     
-    // 3. [💡 1중 방어: 완벽한 태그 매칭 기법] 주소에 따라 메뉴판 강제 필터링
+    // 3. 주소에 따라 메뉴판 강제 필터링
     pages = pages?.filter(item => {
       if (currentHost.includes('scucontentspost')) {
-        // 문자열 배열(tags)과 객체 배열(tagItems)을 모두 양방향 조사하여 'scu'가 있는지 철저히 검증
         const hasScuTag = item.tags?.includes('scu') || 
                            item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
         return hasScuTag
       }
       
       if (currentHost.includes('ssiwonkdocs')) {
-        return true // ssiwonkdocs 도메인은 무조건 전부 노출
+        return true
       }
       
       return true
+    })
+
+    // 4. [💡 핵심 해결책: 수집된 publishDate 값 기준 정렬 강제 집행]
+    pages?.sort((a, b) => {
+      const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
+      const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
+      
+      // 오름차순 정렬 (과거 날짜가 위로, 미래 날짜가 아래로 ➡️ 29일 -> 30일 -> 1일 -> 2일 순서)
+      return timeA - timeB 
+      
+      // 만약 나중에 "최신 날짜가 맨 위로 오게" 바꾸고 싶으시다면 위의 코드를 주석처리하고
+      // return timeB - timeA 로 변경하시면 내림차순으로 즉시 뒤집힙니다!
     })
 
     setFilteredNavPages(pages)
@@ -150,7 +162,7 @@ const LayoutBase = props => {
         changeTocVisible,
         filteredNavPages,
         setFilteredNavPages,
-        allNavPages: filteredNavPages, // [💡 2중 방어] 하위 컴포넌트가 원본 데이터를 요구해도 무조건 필터링된 데이터만 주도록 장악
+        allNavPages: filteredNavPages,
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -176,7 +188,7 @@ const LayoutBase = props => {
                   {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 전체 글 목록 (props로 원본을 달라고 떼써도 무조건 걸러진 목록만 주입) */}
+                  {/* 전체 글 목록 */}
                   <NavPostList filteredNavPages={filteredNavPages} {...props} allNavPages={filteredNavPages} />
                 </div>
                 {/* 푸터 */}
@@ -248,7 +260,7 @@ const LayoutBase = props => {
         {/* 상단 이동 버튼 */}
         <JumpToTopButton />
 
-        {/* 모바일 네비게이션 드로어 (모바일 서랍 메뉴도 필터링된 데이터만 넘겨줌) */}
+        {/* 모바일 네비게이션 드로어 */}
         <PageNavDrawer {...props} filteredNavPages={filteredNavPages} allNavPages={filteredNavPages} />
 
         {/* 모바일 하단 메뉴 바 */}

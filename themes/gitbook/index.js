@@ -65,7 +65,6 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
     const res = {
       short_id: item.short_id,
       title: item.title || '',
-      type: item.type || '', // 💡 [🔥 해결 1] 유실되었던 시스템 타입(Menu, SubMenu 등)을 정상 복사합니다.
       pageCoverThumbnail: item.pageCoverThumbnail || '',
       category: item.category || null,
       tags: item.tags || null,
@@ -135,35 +134,17 @@ const LayoutBase = props => {
       return true
     })
 
-    // 4. [💡 핵심 해결책: 분리형 슬롯 정렬 적용]
-    // Menu, SubMenu, Config, Notice는 노션 표 순서 그대로 칼고정하고, 일반 포스트만 날짜순 정렬합니다.
-    if (pages) {
-      const postIndices = []
-      const postsOnly = []
-      
-      pages.forEach((item, index) => {
-        // 일반 포스트나 페이지 타입만 선별하여 데이터 추출
-        if (item.type === 'Post' || item.type === 'Page' || !item.type) {
-          postIndices.push(index)
-          postsOnly.push(item)
-        }
-      })
-      
-      // 알맹이 포스트들만 날짜순 오름차순(과거 ➡️ 미래) 정렬
-      postsOnly.sort((a, b) => {
-        const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
-        const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-        return timeA - timeB 
-      })
-      
-      // 정렬이 완료된 포스트들을 원래 포스트가 위치하던 인덱스 칸에 순서대로 대입
-      postIndices.forEach((originalIndex, i) => {
-        pages[originalIndex] = postsOnly[i]
-      })
-    }
-
+    // 💡 [🔥 핵심 수정] 상단 메뉴의 구조가 파괴되지 않도록 여기서는 정렬을 수행하지 않고,
+    // 노션 원본 배치 순서 그대로를 유지하여 상태를 저장합니다.
     setFilteredNavPages(pages)
   }, [router, allNavPages])
+
+  // 💡 [🔥 데이터 분리 방어선] 좌측 사이드바와 모바일 드로어 전용 복사본을 만들어 '글 목록'만 날짜순 오름차순 정렬합니다.
+  const sortedNavPagesForSidebar = filteredNavPages ? [...filteredNavPages].sort((a, b) => {
+    const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
+    const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
+    return timeA - timeB 
+  }) : []
 
   const GITBOOK_LOADING_COVER = siteConfig(
     'GITBOOK_LOADING_COVER',
@@ -178,7 +159,7 @@ const LayoutBase = props => {
         changeTocVisible,
         filteredNavPages,
         setFilteredNavPages,
-        allNavPages: filteredNavPages,
+        allNavPages: filteredNavPages, // 상단 바는 정렬되지 않은 원본 구조 데이터를 그대로 사용합니다.
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -204,8 +185,8 @@ const LayoutBase = props => {
                   {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 전체 글 목록 */}
-                  <NavPostList filteredNavPages={filteredNavPages} {...props} allNavPages={filteredNavPages} />
+                  {/* 👉 [🔥 적용 1] 전체 글 목록 사이드바에는 날짜순으로 이쁘게 정렬된 전용 배열을 공급합니다. */}
+                  <NavPostList filteredNavPages={sortedNavPagesForSidebar} {...props} allNavPages={sortedNavPagesForSidebar} />
                 </div>
                 {/* 푸터 */}
                 <Footer {...props} />
@@ -276,8 +257,8 @@ const LayoutBase = props => {
         {/* 상단 이동 버튼 */}
         <JumpToTopButton />
 
-        {/* 모바일 네비게이션 드로어 */}
-        <PageNavDrawer {...props} filteredNavPages={filteredNavPages} allNavPages={filteredNavPages} />
+        {/* 👉 [🔥 적용 2] 모바일 슬라이드 드로어 메뉴판에도 날짜순 정렬된 전용 배열을 공급합니다. */}
+        <PageNavDrawer {...props} filteredNavPages={sortedNavPagesForSidebar} allNavPages={sortedNavPagesForSidebar} />
 
         {/* 모바일 하단 메뉴 바 */}
         <BottomMenuBar {...props} />

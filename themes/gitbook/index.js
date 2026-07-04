@@ -65,6 +65,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
     const res = {
       short_id: item.short_id,
       title: item.title || '',
+      type: item.type || '', // 💡 [🔥 진짜 해결책] 메뉴 구별을 위해 유실되던 type 속성을 완벽하게 복구합니다!
       pageCoverThumbnail: item.pageCoverThumbnail || '',
       category: item.category || null,
       tags: item.tags || null,
@@ -74,7 +75,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
       href: item.href,
       pageIcon: item.pageIcon || '',
       lastEditedDate: item.lastEditedDate,
-      publishDate: item.publishDate || null
+      publishDate: item.publishDate || null 
     }
     if (
       latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
@@ -134,12 +135,11 @@ const LayoutBase = props => {
       return true
     })
 
-    // 💡 [🔥 핵심 수정] 상단 메뉴의 구조가 파괴되지 않도록 여기서는 정렬을 수행하지 않고,
-    // 노션 원본 배치 순서 그대로를 유지하여 상태를 저장합니다.
+    // 상단 네비게이션 바를 위해 정렬되지 않은 노션 오리지널 순서 데이터를 상태로 세팅합니다.
     setFilteredNavPages(pages)
   }, [router, allNavPages])
 
-  // 💡 [🔥 데이터 분리 방어선] 좌측 사이드바와 모바일 드로어 전용 복사본을 만들어 '글 목록'만 날짜순 오름차순 정렬합니다.
+  // 💡 좌측 사이드바 및 모바일 전용 메뉴판을 위해 일반 글만 날짜순 오름차순 정렬을 먹인 별도 복사본 배열을 생성합니다.
   const sortedNavPagesForSidebar = filteredNavPages ? [...filteredNavPages].sort((a, b) => {
     const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
     const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
@@ -159,7 +159,7 @@ const LayoutBase = props => {
         changeTocVisible,
         filteredNavPages,
         setFilteredNavPages,
-        allNavPages: filteredNavPages, // 상단 바는 정렬되지 않은 원본 구조 데이터를 그대로 사용합니다.
+        allNavPages: filteredNavPages, // 상단 헤더는 정렬이 꼬이지 않은 순정 배열을 그대로 참조합니다.
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -167,7 +167,7 @@ const LayoutBase = props => {
 
       <div
         id='theme-gitbook'
-        className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
+        className={`${siteConfig('FONT_style')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
         {/* 상단 네비게이션 바 */}
@@ -185,7 +185,7 @@ const LayoutBase = props => {
                   {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 👉 [🔥 적용 1] 전체 글 목록 사이드바에는 날짜순으로 이쁘게 정렬된 전용 배열을 공급합니다. */}
+                  {/* 전체 글 목록 사이드바에는 정렬 전용 배열을 전달합니다. */}
                   <NavPostList filteredNavPages={sortedNavPagesForSidebar} {...props} allNavPages={sortedNavPagesForSidebar} />
                 </div>
                 {/* 푸터 */}
@@ -257,7 +257,7 @@ const LayoutBase = props => {
         {/* 상단 이동 버튼 */}
         <JumpToTopButton />
 
-        {/* 👉 [🔥 적용 2] 모바일 슬라이드 드로어 메뉴판에도 날짜순 정렬된 전용 배열을 공급합니다. */}
+        {/* 모바일 메뉴 드로어에도 정렬 전용 배열을 매핑합니다. */}
         <PageNavDrawer {...props} filteredNavPages={sortedNavPagesForSidebar} allNavPages={sortedNavPagesForSidebar} />
 
         {/* 모바일 하단 메뉴 바 */}
@@ -343,7 +343,6 @@ const LayoutSlug = props => {
   useEffect(() => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
-    // [💡 본문 직접 주소 접근 방어선] scucontentspost 도메인인데 'scu' 태그가 없는 글 주소로 직접 치고 들어오면 404 차단
     if (post) {
       const hasScuTag = post.tags?.includes('scu') || 
                         post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
@@ -354,7 +353,6 @@ const LayoutSlug = props => {
       }
     }
 
-    // 기본 404 예외 처리
     if (!post) {
       setTimeout(() => {
         if (isBrowser) {

@@ -65,6 +65,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
     const res = {
       short_id: item.short_id,
       title: item.title || '',
+      type: item.type || '', // 💡 [🔥 해결 1] 유실되었던 시스템 타입(Menu, SubMenu 등)을 정상 복사합니다.
       pageCoverThumbnail: item.pageCoverThumbnail || '',
       category: item.category || null,
       tags: item.tags || null,
@@ -74,7 +75,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
       href: item.href,
       pageIcon: item.pageIcon || '',
       lastEditedDate: item.lastEditedDate,
-      publishDate: item.publishDate || null // 💡 [🔥 원인 해결] NotionNext 내부 엔진은 date 값을 'publishDate'라는 이름으로 수집합니다! 유실 방지 매핑 추가.
+      publishDate: item.publishDate || null
     }
     if (
       latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
@@ -134,17 +135,32 @@ const LayoutBase = props => {
       return true
     })
 
-    // 4. [💡 핵심 해결책: 수집된 publishDate 값 기준 정렬 강제 집행]
-    pages?.sort((a, b) => {
-      const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
-      const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
+    // 4. [💡 핵심 해결책: 분리형 슬롯 정렬 적용]
+    // Menu, SubMenu, Config, Notice는 노션 표 순서 그대로 칼고정하고, 일반 포스트만 날짜순 정렬합니다.
+    if (pages) {
+      const postIndices = []
+      const postsOnly = []
       
-      // 오름차순 정렬 (과거 날짜가 위로, 미래 날짜가 아래로 ➡️ 29일 -> 30일 -> 1일 -> 2일 순서)
-      return timeA - timeB 
+      pages.forEach((item, index) => {
+        // 일반 포스트나 페이지 타입만 선별하여 데이터 추출
+        if (item.type === 'Post' || item.type === 'Page' || !item.type) {
+          postIndices.push(index)
+          postsOnly.push(item)
+        }
+      })
       
-      // 만약 나중에 "최신 날짜가 맨 위로 오게" 바꾸고 싶으시다면 위의 코드를 주석처리하고
-      // return timeB - timeA 로 변경하시면 내림차순으로 즉시 뒤집힙니다!
-    })
+      // 알맹이 포스트들만 날짜순 오름차순(과거 ➡️ 미래) 정렬
+      postsOnly.sort((a, b) => {
+        const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
+        const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
+        return timeA - timeB 
+      })
+      
+      // 정렬이 완료된 포스트들을 원래 포스트가 위치하던 인덱스 칸에 순서대로 대입
+      postIndices.forEach((originalIndex, i) => {
+        pages[originalIndex] = postsOnly[i]
+      })
+    }
 
     setFilteredNavPages(pages)
   }, [router, allNavPages])

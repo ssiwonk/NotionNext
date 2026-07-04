@@ -62,20 +62,10 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
   localStorage.setItem('post_read_time', JSON.stringify(postReadTime))
 
   return allNavPages?.map(item => {
+    // 💡 [🔥 진짜 해결책 1] 기존 item 오브젝트의 모든 숨겨진 속성(...item)을 완벽 보존하면서 복사합니다!
     const res = {
-      short_id: item.short_id,
-      title: item.title || '',
-      type: item.type || '', // 💡 [중요] 메뉴 구별을 위해 유실되던 type 속성을 복구합니다.
-      pageCoverThumbnail: item.pageCoverThumbnail || '',
-      category: item.category || null,
-      tags: item.tags || null,
-      tagItems: item.tagItems || null,
-      summary: item.summary || null,
-      slug: item.slug,
-      href: item.href,
-      pageIcon: item.pageIcon || '',
-      lastEditedDate: item.lastEditedDate,
-      publishDate: item.publishDate || null
+      ...item,
+      publishDate: item.publishDate || null 
     }
     if (
       latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
@@ -109,7 +99,10 @@ const LayoutBase = props => {
   const router = useRouter()
   const [tocVisible, changeTocVisible] = useState(false)
   const [pageNavVisible, changePageNavVisible] = useState(false)
+  
+  // 데이터 분리를 위한 두 개의 독립적인 상태 분할
   const [filteredNavPages, setFilteredNavPages] = useState(allNavPages)
+  const [sidebarNavPages, setSidebarNavPages] = useState(allNavPages)
 
   const searchModal = useRef(null)
 
@@ -135,16 +128,19 @@ const LayoutBase = props => {
       return true
     })
 
-    // 상단 네비게이션 바를 위해 정렬되지 않은 노션 오리지널 순서 데이터를 상태로 세팅합니다.
+    // 💡 [🔥 진짜 해결책 2] 상단 메뉴 전용 바구니에는 노션 원래 정렬 구조 그대로 주입합니다.
     setFilteredNavPages(pages)
-  }, [router, allNavPages])
 
-  // 💡 좌측 사이드바 전용 복사본을 만들어 '글 목록'만 날짜순 오름차순 정렬합니다.
-  const sortedNavPagesForSidebar = filteredNavPages ? [...filteredNavPages].sort((a, b) => {
-    const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
-    const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-    return timeA - timeB 
-  }) : []
+    // 💡 [🔥 진짜 해결책 3] 왼쪽 사이드바용 바구니만 복사본을 만들어 따로 날짜 정렬을 수행합니다.
+    if (pages) {
+      const sorted = [...pages].sort((a, b) => {
+        const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
+        const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
+        return timeA - timeB 
+      })
+      setSidebarNavPages(sorted)
+    }
+  }, [router, allNavPages])
 
   const GITBOOK_LOADING_COVER = siteConfig(
     'GITBOOK_LOADING_COVER',
@@ -159,7 +155,7 @@ const LayoutBase = props => {
         changeTocVisible,
         filteredNavPages,
         setFilteredNavPages,
-        allNavPages: filteredNavPages,
+        allNavPages: filteredNavPages, // 상단 바 공유 데이터 세팅
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -170,7 +166,7 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 👉 [🔥 초강력 핵심 수정] Header 컴포넌트에 정렬이 뒤섞이지 않은 깨끗한 오리지널 배열을 직접 주입합니다! */}
+        {/* 💡 [🔥 진짜 해결책 4] Header 컴포넌트에 파괴되지 않은 온전한 원본 구조 데이터를 강제 전달합니다. */}
         <Header {...props} allNavPages={filteredNavPages} customNavPages={filteredNavPages} />
 
         <main
@@ -185,8 +181,8 @@ const LayoutBase = props => {
                   {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 전체 글 목록 사이드바에는 정렬 전용 배열을 전달합니다. */}
-                  <NavPostList filteredNavPages={sortedNavPagesForSidebar} {...props} allNavPages={sortedNavPagesForSidebar} />
+                  {/* 전체 글 목록 사이드바에는 완벽하게 정렬된 전용 배열을 공급합니다. */}
+                  <NavPostList filteredNavPages={sidebarNavPages} {...props} allNavPages={sidebarNavPages} />
                 </div>
                 {/* 푸터 */}
                 <Footer {...props} />
@@ -252,13 +248,13 @@ const LayoutBase = props => {
           )}
         </main>
 
-        {GITBOOK_LOADING_COVER && <LoadingCover />}
+        {GITBOOK_LOADING_COVER && <></>}
 
         {/* 상단 이동 버튼 */}
         <JumpToTopButton />
 
-        {/* 모바일 메뉴 드로어에도 정렬 전용 배열을 매핑합니다. */}
-        <PageNavDrawer {...props} filteredNavPages={sortedNavPagesForSidebar} allNavPages={sortedNavPagesForSidebar} />
+        {/* 모바일 메뉴 드로어에도 날짜순 정렬된 전용 배열을 전달합니다. */}
+        <PageNavDrawer {...props} filteredNavPages={sidebarNavPages} allNavPages={sidebarNavPages} />
 
         {/* 모바일 하단 메뉴 바 */}
         <BottomMenuBar {...props} />

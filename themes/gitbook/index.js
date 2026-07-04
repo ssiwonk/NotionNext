@@ -65,7 +65,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
     const res = {
       short_id: item.short_id,
       title: item.title || '',
-      type: item.type || '', // 💡 [🔥 진짜 해결책] 메뉴 구별을 위해 유실되던 type 속성을 완벽하게 복구합니다!
+      type: item.type || '', // 💡 [중요] 메뉴 구별을 위해 유실되던 type 속성을 복구합니다.
       pageCoverThumbnail: item.pageCoverThumbnail || '',
       category: item.category || null,
       tags: item.tags || null,
@@ -75,7 +75,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
       href: item.href,
       pageIcon: item.pageIcon || '',
       lastEditedDate: item.lastEditedDate,
-      publishDate: item.publishDate || null 
+      publishDate: item.publishDate || null
     }
     if (
       latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
@@ -139,7 +139,7 @@ const LayoutBase = props => {
     setFilteredNavPages(pages)
   }, [router, allNavPages])
 
-  // 💡 좌측 사이드바 및 모바일 전용 메뉴판을 위해 일반 글만 날짜순 오름차순 정렬을 먹인 별도 복사본 배열을 생성합니다.
+  // 💡 좌측 사이드바 전용 복사본을 만들어 '글 목록'만 날짜순 오름차순 정렬합니다.
   const sortedNavPagesForSidebar = filteredNavPages ? [...filteredNavPages].sort((a, b) => {
     const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
     const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
@@ -159,7 +159,7 @@ const LayoutBase = props => {
         changeTocVisible,
         filteredNavPages,
         setFilteredNavPages,
-        allNavPages: filteredNavPages, // 상단 헤더는 정렬이 꼬이지 않은 순정 배열을 그대로 참조합니다.
+        allNavPages: filteredNavPages,
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -167,11 +167,11 @@ const LayoutBase = props => {
 
       <div
         id='theme-gitbook'
-        className={`${siteConfig('FONT_style')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
+        className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 상단 네비게이션 바 */}
-        <Header {...props} />
+        {/* 👉 [🔥 초강력 핵심 수정] Header 컴포넌트에 정렬이 뒤섞이지 않은 깨끗한 오리지널 배열을 직접 주입합니다! */}
+        <Header {...props} allNavPages={filteredNavPages} customNavPages={filteredNavPages} />
 
         <main
           id='wrapper'

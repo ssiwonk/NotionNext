@@ -45,9 +45,13 @@ const AlgoliaSearchModal = dynamic(
 )
 const WWAds = dynamic(() => import('@/components/WWAds'), { ssr: false })
 
+// 테마 전역 변수
 const ThemeGlobalGitbook = createContext()
 export const useGitBookGlobal = () => useContext(ThemeGlobalGitbook)
 
+/**
+ * 최신 글에 빨간 점 표시
+ */
 function getNavPagesWithLatest(allNavPages, latestPosts, post) {
   const postReadTime = JSON.parse(
     localStorage.getItem('post_read_time') || '{}'
@@ -57,13 +61,11 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
   }
   localStorage.setItem('post_read_time', JSON.stringify(postReadTime))
 
-  // 🔍 [디버그 1] 노션 서버가 이 테마에 최초로 던져준 원본 날것의 데이터 검사
-  console.log('⚙️ [디버그 1] 노션 원본 전송 데이터 (allNavPages):', allNavPages)
+  // 🔍 [디버그 1] 노션 서버가 이 테마에 최초로 던져준 원본 데이터 구조 계측
+  console.log('⚙️ [디버그 1] 노션 원본 데이터 (allNavPages):', allNavPages)
 
   return allNavPages?.map((item, idx) => {
-    // 각 아이템이 어떤 속성들을 가진 채로 태어나는지 콘솔에 한 줄씩 나열
-    console.log(` -> [원본 추출 ${idx}] 제목: "${item.title}" | 타입(type): "${item.type}" | 부모ID(parentId): "${item.parentId}"`)
-    
+    console.log(` -> [데이터 추출 ${idx}] 제목: "${item.title}" | 타입(type): "${item.type}" | 부모ID(parentId): "${item.parentId}"`)
     return {
       ...item,
       publishDate: item.publishDate || null 
@@ -71,6 +73,12 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
   })
 }
 
+/**
+ * 기본 레이아웃
+ * 좌우 측면 레이아웃 채택, 모바일 기기는 상단 네비게이션 바 사용
+ * @returns {JSX.Element}
+ * @constructor
+ */
 const LayoutBase = props => {
   const {
     children,
@@ -93,11 +101,16 @@ const LayoutBase = props => {
 
   useEffect(() => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
-    let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
+    let pages = getNavPagesWithLatest(allNavPages, latestPages, post)
     
     pages = pages?.filter(item => {
       if (currentHost.includes('scucontentspost')) {
-        return item.tags?.includes('scu') || item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+        const hasScuTag = item.tags?.includes('scu') || 
+                           item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+        return hasScuTag
+      }
+      if (currentHost.includes('ssiwonkdocs')) {
+        return true
       }
       return true
     })
@@ -114,12 +127,15 @@ const LayoutBase = props => {
     }
   }, [router, allNavPages])
 
-  // 🔍 [디버그 2] 최종 조율을 마치고 렌더링 직전, Header와 사이드바가 먹게 될 최종 요리 데이터 검사
-  console.log('⚙️ [디버그 2] Header 주입 직전 데이터 (filteredNavPages):', filteredNavPages)
-  console.log('⚙️ [디버그 3] 사이드바 주입 직전 데이터 (sidebarNavPages):', sidebarNavPages)
+  // 🔍 [디버그 2] 조율을 마치고 각 컴포넌트로 분기 직전의 데이터 최종 확인
+  console.log('⚙️ [디버그 2] Header 주입 데이터 (filteredNavPages):', filteredNavPages)
+  console.log('⚙️ [디버그 3] 사이드바 주입 데이터 (sidebarNavPages):', sidebarNavPages)
 
-  const GITBOOK_LOADING_COVER = siteConfig('GITBOOK_LOADING_COVER', true, CONFIG)
-  
+  const GITBOOK_LOADING_COVER = siteConfig(
+    'GITBOOK_LOADING_COVER',
+    true,
+    CONFIG
+  )
   return (
     <ThemeGlobalGitbook.Provider
       value={{
@@ -134,13 +150,17 @@ const LayoutBase = props => {
       }}>
       <Style />
 
-      <div id='theme-gitbook' className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
+      <div
+        id='theme-gitbook'
+        className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
         {/* 상단바 */}
         <Header {...props} allNavPages={filteredNavPages} customNavPages={filteredNavPages} />
 
-        <main id='wrapper' className={`${siteConfig('LAYOUT_SIDEBAR_REVERSE') ? 'flex-row-reverse' : ''} relative flex justify-between w-full gap-x-6 h-full mx-auto max-w-screen-4xl`}>
+        <main
+          id='wrapper'
+          className={`${siteConfig('LAYOUT_SIDEBAR_REVERSE') ? 'flex-row-reverse' : ''} relative flex justify-between w-full gap-x-6 h-full mx-auto max-w-screen-4xl`}>
           {/* 왼쪽 사이드바 */}
           {fullWidth ? null : (
             <div className={'hidden md:block relative z-10 '}>
@@ -155,14 +175,21 @@ const LayoutBase = props => {
           )}
 
           {/* 중앙 콘텐츠 */}
-          <div id='center-wrapper' className='flex flex-col justify-between w-full relative z-10 pt-14 min-h-screen'>
-            <div id='container-inner' className={`w-full ${fullWidth ? 'px-5' : 'max-w-3xl px-3 lg:px-0'} justify-center mx-auto`}>
+          <div
+            id='center-wrapper'
+            className='flex flex-col justify-between w-full relative z-10 pt-14 min-h-screen'>
+            <div
+              id='container-inner'
+              className={`w-full ${fullWidth ? 'px-5' : 'max-w-3xl px-3 lg:px-0'} justify-center mx-auto`}>
               {slotTop}
               <WWAds className='w-full' orientation='horizontal' />
+
               {children}
+
               <AdSlot type='in-article' />
               <WWAds className='w-full' orientation='horizontal' />
             </div>
+
             <div className='md:hidden'>
               <Footer {...props} />
             </div>
@@ -170,27 +197,38 @@ const LayoutBase = props => {
 
           {/* 우측 사이드바 */}
           {fullWidth ? null : (
-            <div className={'w-72 hidden 2xl:block dark:border-transparent flex-shrink-0 relative z-10 '}>
+            <div
+              className={
+                'w-72 hidden 2xl:block dark:border-transparent flex-shrink-0 relative z-10 '
+              }>
               <div className='py-14 sticky top-0'>
                 <ArticleInfo post={props?.post ? props?.post : props.notice} />
+
                 <div>
                   <Catalog {...props} />
                   {slotRight}
                   {router.route === '/' && (
                     <>
                       <InfoCard {...props} />
-                      {siteConfig('GITBOOK_WIDGET_REVOLVER_MAPS', null, CONFIG) === 'true' && <RevolverMaps />}
+                      {siteConfig(
+                        'GITBOOK_WIDGET_REVOLVER_MAPS',
+                        null,
+                        CONFIG
+                      ) === 'true' && <RevolverMaps />}
                       <Live2D />
                     </>
                   )}
                   <Announcement {...props} />
                 </div>
+
                 <AdSlot type='in-article' />
                 <Live2D />
               </div>
             </div>
           )}
         </main>
+
+        {GITBOOK_LOADING_COVER && <LoadingCover />}
 
         <JumpToTopButton />
         <PageNavDrawer {...props} filteredNavPages={sidebarNavPages} allNavPages={sidebarNavPages} />
@@ -200,10 +238,14 @@ const LayoutBase = props => {
   )
 }
 
+/**
+ * 메인 화면 (Index)
+ */
 const LayoutIndex = props => {
   const router = useRouter()
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
   const [hasRedirected, setHasRedirected] = useState(false)
+
   useEffect(() => {
     const tryRedirect = async () => {
       if (!hasRedirected) {
@@ -213,10 +255,108 @@ const LayoutIndex = props => {
     }
     if (index) tryRedirect()
   }, [index, hasRedirected])
+
   return null
 }
 
-const LayoutPostList = props => <></>
+/**
+ * 글 목록 (사용 안 함)
+ */
+const LayoutPostList = props => {
+  return <></>
+}
+
+/**
+ * 💡 [🔥 복구 완료] 제가 빠뜨렸던 원본의 글 상세 페이지 컴포넌트 원형을 복원했습니다.
+ */
+const LayoutSlug = props => {
+  const { post, prev, next, siteInfo, lock, validPassword } = props
+  const router = useRouter()
+  const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
+  const basePath = router.asPath.split('?')[0]
+  const title =
+    basePath?.indexOf(index) > 0
+      ? `${post?.title} | ${siteInfo?.description}`
+      : `${post?.title} | ${siteInfo?.title}`
+
+  const waiting404 = siteConfig('POST_WAITING_TIME_FOR_404') * 1000
+  
+  useEffect(() => {
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
+    
+    if (post) {
+      const hasScuTag = post.tags?.includes('scu') || 
+                        post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+                        
+      if (currentHost.includes('scucontentspost') && !hasScuTag) {
+        router.push('/404')
+        return
+      }
+    }
+
+    if (!post) {
+      setTimeout(() => {
+        if (isBrowser) {
+          const article = document.querySelector(
+            '#article-wrapper #notion-article'
+          )
+          if (!article) {
+            router.push('/404').then(() => {
+              console.warn('페이지를 찾을 수 없음', router.asPath)
+            })
+          }
+        }
+      }, waiting404)
+    }
+  }, [post])
+  
+  return (
+    <>
+      <Head>
+        <title>{title}</title>
+      </Head>
+
+      {lock && <ArticleLock validPassword={validPassword} />}
+
+      {!lock && (
+        <div id='container'>
+          <h1 className='text-3xl pt-12  dark:text-gray-300'>
+            {siteConfig('POST_TITLE_ICON') && (
+              <NotionIcon icon={post?.pageIcon} />
+            )}
+            {post?.title}
+          </h1>
+
+          {post && (
+            <section className='px-1'>
+              <div id='article-wrapper'>
+                <NotionPage post={post} />
+              </div>
+              <ShareBar post={post} />
+              <div className='flex justify-between'>
+                {siteConfig('POST_DETAIL_CATEGORY') && post?.category && (
+                  <CategoryItem category={post.category} />
+                )}
+                <div>
+                  {siteConfig('POST_DETAIL_TAG') &&
+                    post?.tagItems?.map(tag => (
+                      <TagItemMini key={tag.name} tag={tag} />
+                    ))}
+                </div>
+              </div>
+              {post?.type === 'Post' && (
+                <ArticleAround prev={prev} next={next} />
+              )}
+              <Comment frontMatter={post} />
+            </section>
+          )}
+          <CatalogDrawerWrapper {...props} />
+        </div>
+      )}
+    </>
+  )
+}
+
 const LayoutSearch = props => <></>
 const LayoutArchive = props => <></>
 const Layout404 = props => <></>

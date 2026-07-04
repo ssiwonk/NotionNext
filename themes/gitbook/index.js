@@ -124,13 +124,13 @@ const LayoutBase = props => {
       return true
     })
 
-    // ✨ [교정 반영: 하이브리드 블록 구조화 그룹 정렬 알고리즘]
+    // ✨ [하이브리드 블록 구조화 그룹 정렬 알고리즘 적용]
     if (pages && pages.length > 0) {
       const menuBlocks = []
       const purePosts = []
       let currentMenuBlock = null
 
-      // [Step 1] 기차 칸 분리 분석: Menu와 SubMenu를 하나의 뭉치로 결속시키고 일반 포스트 격리
+      // [Step 1] 부모(Menu)와 자식(SubMenu)을 하나의 자물쇠 뭉치로 결속시키고 일반 글 분리
       pages.forEach(item => {
         if (item.type === 'Menu') {
           if (currentMenuBlock) {
@@ -141,10 +141,10 @@ const LayoutBase = props => {
           if (currentMenuBlock) {
             currentMenuBlock.children.push(item)
           } else {
-            purePosts.push(item) // 부모 없는 독고다이 서브메뉴 예외 방어
+            purePosts.push(item) // 부모 없는 서브메뉴 예외 방어
           }
         } else {
-          purePosts.push(item) // 일반 포스트, 페이지 등
+          purePosts.push(item) // 일반 포스트/페이지 격리
         }
       })
       if (currentMenuBlock) {
@@ -158,7 +158,7 @@ const LayoutBase = props => {
         return timeA - timeB
       })
 
-      // [Step 3] 대메뉴 안의 서브메뉴들끼리도 내부 date 기준 오름차순 2차 정렬
+      // [Step 3] 대메뉴 내부의 서브메뉴들끼리도 내부 date 기준 오름차순 2차 정렬
       menuBlocks.forEach(block => {
         block.children.sort((a, b) => {
           const timeA = a.date ? new Date(a.date).getTime() : 0
@@ -174,22 +174,21 @@ const LayoutBase = props => {
         return timeA - timeB
       })
 
-      // [Step 5] 안전하게 묶인 메뉴 뭉치들을 다시 평탄한(Flat) 기차 칸 배열로 재조립
+      // [Step 5] 안전하게 보호된 메뉴 뭉치들을 다시 평탄한 기차 칸 배열로 재조립
       const sortedMenus = []
       menuBlocks.forEach(block => {
         sortedMenus.push(block.parent)
         sortedMenus.push(...block.children)
       })
 
-      // [Step 6] 최종 결합: [정렬된 메뉴 군단] + [정렬된 포스트 군단]
+      // [Step 6] 최종 평화적 결합: [정렬된 메뉴 군단] + [정렬된 포스트 군단]
       pages = [...sortedMenus, ...purePosts]
     }
 
-    // 완전히 정렬 및 구조 보호가 완료된 데이터를 바구니에 저장합니다.
+    // 최종 연산 결과를 싱크로 바구니에 저장
     setFilteredNavPages(pages)
-  }, [router, allNavPages])
+  }, [router, allNavPages, latestPosts, post])
 
-  // 💡 메뉴 구조가 깨지지 않도록 가공이 완료된 filteredNavPages를 그대로 상단바와 사이드바가 공유합니다.
   const GITBOOK_LOADING_COVER = siteConfig(
     'GITBOOK_LOADING_COVER',
     true,
@@ -214,7 +213,7 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 상단 네비게이션 바 컴포넌트 */}
+        {/* 상단바에 완벽히 정렬된 결합 배열 전달 */}
         <Header {...props} allNavPages={filteredNavPages} />
 
         <main
@@ -227,7 +226,7 @@ const LayoutBase = props => {
                 <div className='overflow-y-scroll scroll-hidden pt-10 pl-5'>
                   {slotLeft}
 
-                  {/* 💡 [오타 교정 및 연쇄 정렬 파괴 방지]: 안전하게 정렬된 filteredNavPages를 직접 주입합니다. */}
+                  {/* 💡 상단바와 동일하게 정렬 구조가 완성된 filteredNavPages를 좌측 사이드바에 완벽 동기화 주입 */}
                   <NavPostList filteredNavPages={filteredNavPages} {...props} allNavPages={filteredNavPages} />
                 </div>
                 <Footer {...props} />
@@ -293,7 +292,7 @@ const LayoutBase = props => {
 
         <JumpToTopButton />
 
-        {/* 모바일 네비게이션 드로어 서랍에도 동기화된 안전 데이터 주입 */}
+        {/* 모바일 서랍장 메뉴판에도 동일한 안전 정렬 데이터 주입 */}
         <PageNavDrawer {...props} filteredNavPages={filteredNavPages} allNavPages={filteredNavPages} />
 
         <BottomMenuBar {...props} />
@@ -301,6 +300,8 @@ const LayoutBase = props => {
     </ThemeGlobalGitbook.Provider>
   )
 }
+
+// ...이하 동일 코드는 지면 관계상 생략 (LayoutIndex, LayoutSlug 등 원본 유지)
 
 export {
   Layout404,

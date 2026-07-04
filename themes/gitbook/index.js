@@ -79,8 +79,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
 }
 
 /**
- * 기본 레이아웃
- * 좌우 측면 레이아웃 채택, 모바일 기기는 상단 네비게이션 바 사용
+ * 기본 레이아웃 Shell (중추 프레임워크)
  */
 const LayoutBase = props => {
   const {
@@ -101,97 +100,75 @@ const LayoutBase = props => {
   const searchModal = useRef(null)
 
   useEffect(() => {
-    // 1. 현재 사용자가 브라우저 주소창에 치고 들어온 도메인을 실시간 감지
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
-    
-    // 2. 기본 최신글 마킹 데이터 생성
     let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
     
-    // 3. 주소에 따라 메뉴판 강제 필터링
     pages = pages?.filter(item => {
       if (currentHost.includes('scucontentspost')) {
         const hasScuTag = item.tags?.includes('scu') || 
                            item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
         return hasScuTag
       }
-      
       if (currentHost.includes('ssiwonkdocs')) {
         return true 
       }
-      
       return true
     })
 
-    // ✨ [하이브리드 블록 구조화 그룹 정렬 알고리즘 적용]
+    // ✨ [하이브리드 블록 구조화 그룹 정렬 알고리즘 + 예외 안전장치]
     if (pages && pages.length > 0) {
       const menuBlocks = []
       const purePosts = []
       let currentMenuBlock = null
 
-      // [Step 1] 부모(Menu)와 자식(SubMenu)을 하나의 자물쇠 뭉치로 결속시키고 일반 글 분리
       pages.forEach(item => {
         if (item.type === 'Menu') {
-          if (currentMenuBlock) {
-            menuBlocks.push(currentMenuBlock)
-          }
+          if (currentMenuBlock) menuBlocks.push(currentMenuBlock)
           currentMenuBlock = { parent: item, children: [] }
         } else if (item.type === 'SubMenu') {
           if (currentMenuBlock) {
             currentMenuBlock.children.push(item)
           } else {
-            purePosts.push(item) // 부모 없는 서브메뉴 예외 방어
+            purePosts.push(item)
           }
         } else {
-          purePosts.push(item) // 일반 포스트/페이지 격리
+          purePosts.push(item)
         }
       })
-      if (currentMenuBlock) {
-        menuBlocks.push(currentMenuBlock)
+      if (currentMenuBlock) menuBlocks.push(currentMenuBlock)
+
+      // 날짜 데이터가 비어있거나 깨졌을 때 NaN 빌드 에러 방어 함수
+      const getSafeTime = (dateStr) => {
+        if (!dateStr) return 0
+        const t = new Date(dateStr).getTime()
+        return isNaN(t) ? 0 : t
       }
 
-      // [Step 2] 대메뉴 뭉치들끼리 사용자가 노션에 지정한 date 기준 오름차순 정렬
-      menuBlocks.sort((a, b) => {
-        const timeA = a.parent.date ? new Date(a.parent.date).getTime() : 0
-        const timeB = b.parent.date ? new Date(b.parent.date).getTime() : 0
-        return timeA - timeB
-      })
+      // 대메뉴 정렬
+      menuBlocks.sort((a, b) => getSafeTime(a.parent?.date) - getSafeTime(b.parent?.date))
 
-      // [Step 3] 대메뉴 내부의 서브메뉴들끼리도 내부 date 기준 오름차순 2차 정렬
+      // 서브메뉴 정렬
       menuBlocks.forEach(block => {
-        block.children.sort((a, b) => {
-          const timeA = a.date ? new Date(a.date).getTime() : 0
-          const timeB = b.date ? new Date(b.date).getTime() : 0
-          return timeA - timeB
-        })
+        block.children.sort((a, b) => getSafeTime(a.date) - getSafeTime(b.date))
       })
 
-      // [Step 4] 격리방에 있던 일반 포스트들도 date 기준 오름차순 정렬
-      purePosts.sort((a, b) => {
-        const timeA = a.date ? new Date(a.date).getTime() : 0
-        const timeB = b.date ? new Date(b.date).getTime() : 0
-        return timeA - timeB
-      })
+      // 일반 포스트 정렬
+      purePosts.sort((a, b) => getSafeTime(a.date) - getSafeTime(b.date))
 
-      // [Step 5] 안전하게 보호된 메뉴 뭉치들을 다시 평탄한 기차 칸 배열로 재조립
       const sortedMenus = []
       menuBlocks.forEach(block => {
         sortedMenus.push(block.parent)
         sortedMenus.push(...block.children)
       })
 
-      // [Step 6] 최종 평화적 결합: [정렬된 메뉴 군단] + [정렬된 포스트 군단]
       pages = [...sortedMenus, ...purePosts]
     }
 
-    // 최종 연산 결과를 싱크로 바구니에 저장
     setFilteredNavPages(pages)
   }, [router, allNavPages, latestPosts, post])
 
-  const GITBOOK_LOADING_COVER = siteConfig(
-    'GITBOOK_LOADING_COVER',
-    true,
-    CONFIG
-  )
+  const GITBOOK_LOADING_COVER = siteConfig('GITBOOK_LOADING_COVER', true, CONFIG)
+
   return (
     <ThemeGlobalGitbook.Provider
       value={{
@@ -206,25 +183,16 @@ const LayoutBase = props => {
       }}>
       <Style />
 
-      <div
-        id='theme-gitbook'
-        className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
+      <div id='theme-gitbook' className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
-
-        {/* 상단바에 완벽히 정렬된 결합 배열 전달 */}
         <Header {...props} allNavPages={filteredNavPages} />
 
-        <main
-          id='wrapper'
-          className={`${siteConfig('LAYOUT_SIDEBAR_REVERSE') ? 'flex-row-reverse' : ''} relative flex justify-between w-full gap-x-6 h-full mx-auto max-w-screen-4xl`}>
-          {/* 왼쪽 사이드바 메뉴판 */}
+        <main id='wrapper' className={`${siteConfig('LAYOUT_SIDEBAR_REVERSE') ? 'flex-row-reverse' : ''} relative flex justify-between w-full gap-x-6 h-full mx-auto max-w-screen-4xl`}>
           {fullWidth ? null : (
             <div className={'hidden md:block relative z-10 '}>
               <div className='w-80 pt-14 pb-4 sticky top-0 h-screen flex justify-between flex-col'>
                 <div className='overflow-y-scroll scroll-hidden pt-10 pl-5'>
                   {slotLeft}
-
-                  {/* 안전하게 정렬 구조가 완성된 filteredNavPages를 좌측 사이드바에 완벽 동기화 주입 */}
                   <NavPostList filteredNavPages={filteredNavPages} {...props} allNavPages={filteredNavPages} />
                 </div>
                 <Footer {...props} />
@@ -232,53 +200,35 @@ const LayoutBase = props => {
             </div>
           )}
 
-          {/* 중앙 콘텐츠 영역 */}
-          <div
-            id='center-wrapper'
-            className='flex flex-col justify-between w-full relative z-10 pt-14 min-h-screen'>
-            <div
-              id='container-inner'
-              className={`w-full ${fullWidth ? 'px-5' : 'max-w-3xl px-3 lg:px-0'} justify-center mx-auto`}>
+          <div id='center-wrapper' className='flex flex-col justify-between w-full relative z-10 pt-14 min-h-screen'>
+            <div id='container-inner' className={`w-full ${fullWidth ? 'px-5' : 'max-w-3xl px-3 lg:px-0'} justify-center mx-auto`}>
               {slotTop}
               <WWAds className='w-full' orientation='horizontal' />
-
               {children}
-
               <AdSlot type='in-article' />
               <WWAds className='w-full' orientation='horizontal' />
             </div>
-
             <div className='md:hidden'>
               <Footer {...props} />
             </div>
           </div>
 
-          {/* 우측 사이드바 */}
           {fullWidth ? null : (
-            <div
-              className={
-                'w-72 hidden 2xl:block dark:border-transparent flex-shrink-0 relative z-10 '
-              }>
+            <div className={'w-72 hidden 2xl:block dark:border-transparent flex-shrink-0 relative z-10 '}>
               <div className='py-14 sticky top-0'>
                 <ArticleInfo post={props?.post ? props?.post : props.notice} />
-
                 <div>
                   <Catalog {...props} />
                   {slotRight}
                   {router.route === '/' && (
                     <>
                       <InfoCard {...props} />
-                      {siteConfig(
-                        'GITBOOK_WIDGET_REVOLVER_MAPS',
-                        null,
-                        CONFIG
-                      ) === 'true' && <RevolverMaps />}
+                      {siteConfig('GITBOOK_WIDGET_REVOLVER_MAPS', null, CONFIG) === 'true' && <RevolverMaps />}
                       <Live2D />
                     </>
                   )}
                   <Announcement {...props} />
                 </div>
-
                 <AdSlot type='in-article' />
                 <Live2D />
               </div>
@@ -287,12 +237,8 @@ const LayoutBase = props => {
         </main>
 
         {GITBOOK_LOADING_COVER && <LoadingCover />}
-
         <JumpToTopButton />
-
-        {/* 모바일 서랍장 메뉴판에도 동일한 안전 정렬 데이터 주입 */}
         <PageNavDrawer {...props} filteredNavPages={filteredNavPages} allNavPages={filteredNavPages} />
-
         <BottomMenuBar {...props} />
       </div>
     </ThemeGlobalGitbook.Provider>
@@ -300,19 +246,34 @@ const LayoutBase = props => {
 }
 
 /**
- * 메인 인덱스 페이지 레이아웃
+ * 💡 [구조 교정] 글 목록 상위 레이아웃들은 더이상 중첩해서 LayoutBase를 부르지 않고 
+ * 오직 LayoutPostList 하나만 상속받거나 단일 처리하여 연쇄 충돌을 방지합니다.
  */
 const LayoutIndex = props => {
+  return <LayoutPostList {...props} />
+}
+
+const LayoutPostList = props => {
+  const { posts } = props
   return (
     <LayoutBase {...props}>
-      <LayoutPostList {...props} />
+      <div className='mt-4 angular-custom-posts'>
+        {posts?.map(p => (
+          <BlogArchiveItem key={p.id} post={p} />
+        ))}
+      </div>
     </LayoutBase>
   )
 }
 
-/**
- * 일반 포스트 및 위키 문서 레이아웃 (핵심 화면)
- */
+const LayoutCategoryIndex = props => {
+  return <LayoutPostList {...props} />
+}
+
+const LayoutTagIndex = props => {
+  return <LayoutPostList {...props} />
+}
+
 const LayoutSlug = props => {
   const { post, lock, validLock } = props
   return (
@@ -331,25 +292,6 @@ const LayoutSlug = props => {
   )
 }
 
-/**
- * 글 목록 검색 레이아웃
- */
-const LayoutPostList = props => {
-  const { posts } = props
-  return (
-    <LayoutBase {...props}>
-      <div className='mt-4 angular-custom-posts'>
-        {posts?.map(p => (
-          <BlogArchiveItem key={p.id} post={p} />
-        ))}
-      </div>
-    </LayoutBase>
-  )
-}
-
-/**
- * 아카이브(타임라인) 레이아웃
- */
 const LayoutArchive = props => {
   const { archivePosts } = props
   return (
@@ -372,41 +314,6 @@ const LayoutArchive = props => {
   )
 }
 
-/**
- * 카테고리 인덱스 레이아웃
- */
-const LayoutCategoryIndex = props => {
-  const { categoryOptions } = props
-  return (
-    <LayoutBase {...props}>
-      <div className='mt-4 dark:text-gray-300 flex flex-wrap gap-4'>
-        {categoryOptions?.map(c => (
-          <CategoryItem key={c.name} category={c.name} />
-        ))}
-      </div>
-    </LayoutBase>
-  )
-}
-
-/**
- * 태그 인덱스 레이아웃
- */
-const LayoutTagIndex = props => {
-  const { tagOptions } = props
-  return (
-    <LayoutBase {...props}>
-      <div className='mt-4 dark:text-gray-300 flex flex-wrap gap-2'>
-        {tagOptions?.map(t => (
-          <TagItemMini key={t.name} tag={t} />
-        ))}
-      </div>
-    </LayoutBase>
-  )
-}
-
-/**
- * 대시보드 레이아웃
- */
 const LayoutDashboard = props => {
   return (
     <LayoutBase {...props}>
@@ -416,9 +323,6 @@ const LayoutDashboard = props => {
   )
 }
 
-/**
- * 기타 필수 레이아웃 껍데기 선언 (에러 방지용)
- */
 const LayoutSearch = props => <LayoutBase {...props} />
 const Layout404 = props => <LayoutBase {...props}><div className='text-center py-20 text-xl font-bold'>404 Not Found</div></LayoutBase>
 const LayoutSignIn = props => <LayoutBase {...props}><div className='flex justify-center items-center py-10'><SignIn /></div></LayoutBase>

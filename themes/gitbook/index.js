@@ -62,19 +62,10 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
   localStorage.setItem('post_read_time', JSON.stringify(postReadTime))
 
   return allNavPages?.map(item => {
+    // 💡 [교정 1] 원본 오브젝트 속성(...item)을 100% 유실 없이 안전하게 복사하여 메뉴 계층 붕괴를 방지합니다.
     const res = {
-      short_id: item.short_id,
-      title: item.title || '',
-      pageCoverThumbnail: item.pageCoverThumbnail || '',
-      category: item.category || null,
-      tags: item.tags || null,
-      tagItems: item.tagItems || null,
-      summary: item.summary || null,
-      slug: item.slug,
-      href: item.href,
-      pageIcon: item.pageIcon || '',
-      lastEditedDate: item.lastEditedDate,
-      publishDate: item.publishDate || item.date || null // 💡 [교정 1] 최초 코드에 빠져있던 날짜 데이터를 안전하게 바구니에 탑승시킵니다.
+      ...item,
+      publishDate: item.publishDate || item.date || null 
     }
     if (
       latestPosts && latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
@@ -134,11 +125,11 @@ const LayoutBase = props => {
       return true
     })
 
+    // 💡 [교정 2] 전역 바구니에는 정렬을 절대 수행하지 않고 노션 원본 순서를 유지하여 상단 메뉴판 오류를 원천 차단합니다.
     setFilteredNavPages(pages)
   }, [router, allNavPages])
 
-  // 💡 [🔥 교정 2: 철통 보안 격리 정렬 기법] 
-  // 상단 바 메뉴에는 절대 간섭하지 않고, 오직 좌측 사이드바 전용 복사본만 생성하여 날짜순(과거->최신)으로 정렬합니다.
+  // 💡 [교정 3] 오직 왼쪽 사이드바(글 목록)만을 위한 독립된 날짜순 정렬 복사본을 생성합니다.
   const sortedNavPagesForSidebar = filteredNavPages ? [...filteredNavPages].sort((a, b) => {
     const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
     const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
@@ -169,7 +160,7 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 💡 상단 메뉴바는 최초 작동 방식 그대로 순정 원본 props를 받아 독립 격리하여 오류를 원천 차단합니다. */}
+        {/* 상단 네비게이션 바 (순정 오리지널 props 파이프라인 유지) */}
         <Header {...props} />
 
         <main
@@ -184,7 +175,7 @@ const LayoutBase = props => {
                   {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 💡 좌측 글 목록 사이드바에는 날짜 순서대로 정렬을 마친 전용 배열을 공급합니다. */}
+                  {/* 💡 [교정 4] 왼쪽 글 목록 컴포넌트에는 정렬이 완료된 별도의 배열만 안전하게 주입합니다. */}
                   <NavPostList filteredNavPages={sortedNavPagesForSidebar} {...props} allNavPages={sortedNavPagesForSidebar} />
                 </div>
                 {/* 푸터 */}
@@ -256,7 +247,7 @@ const LayoutBase = props => {
         {/* 상단 이동 버튼 */}
         <JumpToTopButton />
 
-        {/* 모바일 네비게이션 드로어 서랍에도 정렬된 배열을 안전하게 공급합니다. */}
+        {/* 모바일 네비게이션 드로어 서랍에도 정렬된 배열을 독립 공급합니다. */}
         <PageNavDrawer {...props} filteredNavPages={sortedNavPagesForSidebar} allNavPages={sortedNavPagesForSidebar} />
 
         {/* 모바일 하단 메뉴 바 */}

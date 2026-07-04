@@ -31,7 +31,7 @@ import CategoryItem from './components/CategoryItem'
 import Footer from './components/Footer'
 import Header from './components/Header'
 import InfoCard from './components/InfoCard'
-import JumpToTopButton = './components/JumpToTopButton'
+import JumpToTopButton from './components/JumpToTopButton'
 import NavPostList from './components/NavPostList'
 import PageNavDrawer from './components/PageNavDrawer'
 import RevolverMaps from './components/RevolverMaps'
@@ -124,7 +124,7 @@ const LayoutBase = props => {
       return true
     })
 
-    // ✨ [교정 반영] 안전한 블록 구조화 정렬: 기차칸(부모-자식 관계)을 유지하면서 date 기준 오름차순 정렬
+    // ✨ 안전한 블록 구조화 정렬: 기차칸(부모-자식 관계)을 유지하면서 date 기준 오름차순 정렬
     if (pages && pages.length > 0) {
       const blocks = [];
       let currentMenu = null;
@@ -209,7 +209,7 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 💡 상단 네비게이션 바 컴포넌트에도 정렬 및 필터링이 완료된 배열을 명시적으로 주입합니다. */}
+        {/* 상단 네비게이션 바 컴포넌트 */}
         <Header {...props} allNavPages={filteredNavPages} />
 
         <main
@@ -224,7 +224,7 @@ const LayoutBase = props => {
                   {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 💡 [오타 교정] 정의되지 않았던 sortedNavSidebar 대신 가공 완료된 filteredNavPages를 주입합니다. */}
+                  {/* 왼쪽 글 목록 컴포넌트 */}
                   <NavPostList filteredNavPages={filteredNavPages} {...props} allNavPages={sortedNavPagesForSidebar} />
                 </div>
                 {/* 푸터 */}
@@ -280,7 +280,7 @@ const LayoutBase = props => {
                       <Live2D />
                     </>
                   )}
-                  {/* 깃북 테마 메인 화면에는 공지사항만 표시 */}
+                  {/* 공지사항 */}
                   <Announcement {...props} />
                 </div>
 
@@ -307,7 +307,7 @@ const LayoutBase = props => {
 }
 
 /**
- * 메인 인덱스 레이아웃
+ * 메인 인덱스 페이지 레이아웃
  */
 const LayoutIndex = props => {
   return (

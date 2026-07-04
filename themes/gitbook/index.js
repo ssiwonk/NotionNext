@@ -50,25 +50,6 @@ const ThemeGlobalGitbook = createContext()
 export const useGitBookGlobal = () => useContext(ThemeGlobalGitbook)
 
 /**
- * 💡 [안전 장치] 노션의 다양한 날짜 데이터 구조(문자열, 숫자, 객체)를 완벽하게 타임스탬프로 변환
- */
-const getPageTimestamp = (item) => {
-  if (!item) return 0
-  
-  // NotionNext가 파싱하는 대표 날짜 필드 확보
-  let dateVal = item.publishDate || item.date || item.createdTime
-  
-  // 만약 date 컬럼이 객체 형태 { start_date: '2026-07-04' } 일 경우 가공 처리
-  if (dateVal && typeof dateVal === 'object') {
-    dateVal = dateVal.start_date || dateVal.date || null
-  }
-  
-  if (!dateVal) return 0
-  const timestamp = new Date(dateVal).getTime()
-  return isNaN(timestamp) ? 0 : timestamp
-}
-
-/**
  * 최신 글에 빨간 점 표시
  */
 function getNavPagesWithLatest(allNavPages, latestPosts, post) {
@@ -99,9 +80,6 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
 
 /**
  * 기본 레이아웃
- * 좌우 측면 레이아웃 채택, 모바일 기기는 상단 네비게이션 바 사용
- * @returns {JSX.Element}
- * @constructor
  */
 const LayoutBase = props => {
   const {
@@ -123,8 +101,11 @@ const LayoutBase = props => {
 
   useEffect(() => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
+    
+    // 1. 기본 마킹 데이터 확보
     let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
     
+    // 2. 도메인별 필터링
     pages = pages?.filter(item => {
       if (currentHost.includes('scucontentspost')) {
         const hasScuTag = item.tags?.includes('scu') || 
@@ -134,51 +115,28 @@ const LayoutBase = props => {
       return true
     })
 
-    // [🔥 하이브리드 블록 구조화 그룹 정렬 로직 고도화 버전]
     if (pages) {
+      // 3. 메뉴 데이터와 일반 포스트 분리
       const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
       const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
 
-      const menuGroups = []
-      let currentGroup = null
-
-      menuItems.forEach(item => {
-        if (item.type === 'Menu') {
-          currentGroup = { parent: item, subMenus: [] }
-          menuGroups.push(currentGroup)
-        } else if (item.type === 'SubMenu') {
-          if (currentGroup) {
-            currentGroup.subMenus.push(item)
-          } else {
-            menuGroups.push({ parent: item, subMenus: [] })
-          }
-        }
+      // 🔥 [핵심 수정] 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 '오름차순' 정렬합니다.
+      // 이렇게 하면 시간 순서대로 [대메뉴(과거) -> 하위메뉴(이후 생성)] 배치가 보장되어 기차칸 매칭이 깨지지 않습니다.
+      menuItems.sort((a, b) => {
+        const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0
+        const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0
+        return timeA - timeB // 오름차순 (과거 -> 최신순)
       })
 
-      // 💡 철벽 헬퍼 함수를 적용하여 정렬 연산 수행 (과거 ➡️ 최신 오름차순)
-      menuGroups.sort((a, b) => {
-        return getPageTimestamp(a.parent) - getPageTimestamp(b.parent)
-      })
-
-      menuGroups.forEach(group => {
-        group.subMenus.sort((a, b) => {
-          return getPageTimestamp(a) - getPageTimestamp(b)
-        })
-      })
-
-      const sortedMenus = []
-      menuGroups.forEach(group => {
-        sortedMenus.push(group.parent)
-        group.subMenus.forEach(sub => {
-          sortedMenus.push(sub)
-        })
-      })
-
+      // 4. 일반 포스트들도 원하는 대로 date 기준 오름차순 정렬
       postItems.sort((a, b) => {
-        return getPageTimestamp(a) - getPageTimestamp(b)
+        const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
+        const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
+        return timeA - timeB // 오름차순
       })
 
-      const finalPages = [...sortedMenus, ...postItems]
+      // 5. 정렬 완료된 메뉴와 포스트 결합
+      const finalPages = [...menuItems, ...postItems]
       setFilteredNavPages(finalPages)
     } else {
       setFilteredNavPages(pages)
@@ -209,7 +167,7 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 💡 1순위 우회 차단: 상단 메뉴바 Header 컴포넌트에 정렬 완료된 데이터를 직접 밀어넣고, allNavPages 오버라이딩을 강제합니다. */}
+        {/* 상단 헤더에 오름차순 정렬된 메뉴 데이터 주입 및 원본 오버라이드 */}
         <Header 
           {...props} 
           allNavPages={filteredNavPages}
@@ -226,7 +184,7 @@ const LayoutBase = props => {
                 <div className='overflow-y-scroll scroll-hidden pt-10 pl-5'>
                   {slotLeft}
 
-                  {/* 💡 2순위 우회 차단: 글 목록 컴포넌트에 props 원본을 덮어쓰고 필터링된 데이터 주입 */}
+                  {/* 글 목록 컴포넌트에도 정렬된 데이터 강제 피딩 */}
                   <NavPostList 
                     {...props} 
                     allNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} 
@@ -296,7 +254,7 @@ const LayoutBase = props => {
 
         <JumpToTopButton />
 
-        {/* 💡 3순위 우회 차단: 모바일 메뉴 드로어에도 완벽하게 교정된 정렬본 주입 */}
+        {/* 모바일 메뉴 드로어 */}
         <PageNavDrawer 
           {...props} 
           filteredNavPages={filteredNavPages} 

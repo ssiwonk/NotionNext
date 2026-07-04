@@ -95,53 +95,56 @@ const LayoutBase = props => {
   const router = useRouter()
   const [tocVisible, changeTocVisible] = useState(false)
   const [pageNavVisible, changePageNavVisible] = useState(false)
-  const [filteredNavPages, setFilteredNavPages] = useState(allNavPages)
 
   const searchModal = useRef(null)
 
-  useEffect(() => {
-    const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
-    
-    // 1. 기본 마킹 데이터 확보
-    let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
-    
-    // 2. 도메인별 필터링
-    pages = pages?.filter(item => {
-      if (currentHost.includes('scucontentspost')) {
-        const hasScuTag = item.tags?.includes('scu') || 
-                          item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
-        return hasScuTag
-      }
-      return true
-    })
-
-    if (pages) {
-      // 3. 메뉴 데이터와 일반 포스트 분리
-      const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
-      const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
-
-      // 🔥 [핵심 수정] 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 '오름차순' 정렬합니다.
-      // 이렇게 하면 시간 순서대로 [대메뉴(과거) -> 하위메뉴(이후 생성)] 배치가 보장되어 기차칸 매칭이 깨지지 않습니다.
-      menuItems.sort((a, b) => {
-        const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0
-        const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0
-        return timeA - timeB // 오름차순 (과거 -> 최신순)
-      })
-
-      // 4. 일반 포스트들도 원하는 대로 date 기준 오름차순 정렬
-      postItems.sort((a, b) => {
-        const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
-        const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-        return timeA - timeB // 오름차순
-      })
-
-      // 5. 정렬 완료된 메뉴와 포스트 결합
-      const finalPages = [...menuItems, ...postItems]
-      setFilteredNavPages(finalPages)
-    } else {
-      setFilteredNavPages(pages)
+  // ---------------------------------------------------------------------------
+  // 🔥 [임계 구역] 화면이 그려지기 전(Render Phase) 동기적으로 정렬 가공을 끝내버립니다.
+  // ---------------------------------------------------------------------------
+  const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
+  let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
+  
+  // 도메인 필터링
+  pages = pages?.filter(item => {
+    if (currentHost.includes('scucontentspost')) {
+      const hasScuTag = item.tags?.includes('scu') || 
+                        item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+      return hasScuTag
     }
-  }, [router, allNavPages])
+    return true
+  })
+
+  let sortedNavPages = pages || []
+
+  if (pages) {
+    const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
+    const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
+
+    // 안전하게 날짜/생성일시 타임스탬프 파싱하는 내부 헬퍼
+    const getTimestamp = (item, field) => {
+      if (!item) return 0
+      const val = item[field] || item.createdTime || item.created_time || item.date || item.publishDate
+      if (!val) return 0
+      const t = new Date(val).getTime()
+      return isNaN(t) ? 0 : t
+    }
+
+    // 1) 메뉴 데이터: 생성일시(createdTime) 기준 '오름차순' (과거 ➡️ 최신) 정렬
+    menuItems.sort((a, b) => getTimestamp(a, 'createdTime') - getTimestamp(b, 'createdTime'))
+
+    // 2) 일반 포스트 데이터: 지정 날짜(date/publishDate) 기준 '오름차순' 정렬
+    postItems.sort((a, b) => getTimestamp(a, 'publishDate') - getTimestamp(b, 'publishDate'))
+
+    // 3) 메뉴와 포스트 결합
+    sortedNavPages = [...menuItems, ...postItems]
+  }
+
+  // 💡 하위 컴포넌트들이 원본 allNavPages를 가로채지 못하도록 정렬된 배열로 완벽히 오버라이딩한 커스텀 프롭스 생성
+  const customProps = {
+    ...props,
+    allNavPages: sortedNavPages
+  }
+  // ---------------------------------------------------------------------------
 
   const GITBOOK_LOADING_COVER = siteConfig(
     'GITBOOK_LOADING_COVER',
@@ -154,9 +157,9 @@ const LayoutBase = props => {
         searchModal,
         tocVisible,
         changeTocVisible,
-        filteredNavPages,
-        setFilteredNavPages,
-        allNavPages: filteredNavPages, 
+        filteredNavPages: sortedNavPages,
+        setFilteredNavPages: () => {}, // 불필요한 비동기 트리거 차단
+        allNavPages: sortedNavPages, 
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -165,13 +168,12 @@ const LayoutBase = props => {
       <div
         id='theme-gitbook'
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
-        <AlgoliaSearchModal cRef={searchModal} {...props} />
+        <AlgoliaSearchModal cRef={searchModal} {...customProps} />
 
-        {/* 상단 헤더에 오름차순 정렬된 메뉴 데이터 주입 및 원본 오버라이드 */}
+        {/* 💡 상단 헤더 컴포넌트에 강제로 오름차순 정렬 완료된 데이터 팩 주입 */}
         <Header 
-          {...props} 
-          allNavPages={filteredNavPages}
-          customNav={filteredNavPages?.filter(item => item.type === 'Menu' || item.type === 'SubMenu')} 
+          {...customProps} 
+          customNav={sortedNavPages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')} 
         />
 
         <main
@@ -184,14 +186,13 @@ const LayoutBase = props => {
                 <div className='overflow-y-scroll scroll-hidden pt-10 pl-5'>
                   {slotLeft}
 
-                  {/* 글 목록 컴포넌트에도 정렬된 데이터 강제 피딩 */}
+                  {/* 💡 사이드바 글 목록 컴포넌트에도 정렬본 완벽 주입 */}
                   <NavPostList 
-                    {...props} 
-                    allNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} 
-                    filteredNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} 
+                    {...customProps} 
+                    filteredNavPages={sortedNavPages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} 
                   />
                 </div>
-                <Footer {...props} />
+                <Footer {...customProps} />
               </div>
             </div>
           )}
@@ -213,7 +214,7 @@ const LayoutBase = props => {
             </div>
 
             <div className='md:hidden'>
-              <Footer {...props} />
+              <Footer {...customProps} />
             </div>
           </div>
 
@@ -227,11 +228,11 @@ const LayoutBase = props => {
                 <ArticleInfo post={props?.post ? props?.post : props.notice} />
 
                 <div>
-                  <Catalog {...props} />
+                  <Catalog {...customProps} />
                   {slotRight}
                   {router.route === '/' && (
                     <>
-                      <InfoCard {...props} />
+                      <InfoCard {...customProps} />
                       {siteConfig(
                         'GITBOOK_WIDGET_REVOLVER_MAPS',
                         null,
@@ -240,7 +241,7 @@ const LayoutBase = props => {
                       <Live2D />
                     </>
                   )}
-                  <Announcement {...props} />
+                  <Announcement {...customProps} />
                 </div>
 
                 <AdSlot type='in-article' />
@@ -254,14 +255,13 @@ const LayoutBase = props => {
 
         <JumpToTopButton />
 
-        {/* 모바일 메뉴 드로어 */}
+        {/* 💡 모바일 네비게이션 드로어 오버라이딩 */}
         <PageNavDrawer 
-          {...props} 
-          filteredNavPages={filteredNavPages} 
-          allNavPages={filteredNavPages} 
+          {...customProps} 
+          filteredNavPages={sortedNavPages} 
         />
 
-        <BottomMenuBar {...props} />
+        <BottomMenuBar {...customProps} />
       </div>
     </ThemeGlobalGitbook.Provider>
   )

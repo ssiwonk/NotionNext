@@ -81,8 +81,6 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
 /**
  * 기본 레이아웃
  * 좌우 측면 레이아웃 채택, 모바일 기기는 상단 네비게이션 바 사용
- * @returns {JSX.Element}
- * @constructor
  */
 const LayoutBase = props => {
   const {
@@ -226,7 +224,7 @@ const LayoutBase = props => {
                 <div className='overflow-y-scroll scroll-hidden pt-10 pl-5'>
                   {slotLeft}
 
-                  {/* 💡 상단바와 동일하게 정렬 구조가 완성된 filteredNavPages를 좌측 사이드바에 완벽 동기화 주입 */}
+                  {/* 안전하게 정렬 구조가 완성된 filteredNavPages를 좌측 사이드바에 완벽 동기화 주입 */}
                   <NavPostList filteredNavPages={filteredNavPages} {...props} allNavPages={filteredNavPages} />
                 </div>
                 <Footer {...props} />
@@ -301,7 +299,130 @@ const LayoutBase = props => {
   )
 }
 
-// ...이하 동일 코드는 지면 관계상 생략 (LayoutIndex, LayoutSlug 등 원본 유지)
+/**
+ * 메인 인덱스 페이지 레이아웃
+ */
+const LayoutIndex = props => {
+  return (
+    <LayoutBase {...props}>
+      <LayoutPostList {...props} />
+    </LayoutBase>
+  )
+}
+
+/**
+ * 일반 포스트 및 위키 문서 레이아웃 (핵심 화면)
+ */
+const LayoutSlug = props => {
+  const { post, lock, validLock } = props
+  return (
+    <LayoutBase {...props}>
+      {lock && !validLock ? (
+        <ArticleLock {...props} />
+      ) : (
+        <article itemScope itemType='https://schema.org/Article' className='subpixel-antialiased overflow-y-hidden'>
+          {post && <NotionPage post={post} />}
+          <ArticleAround prev={props.prev} next={props.next} />
+          <ShareBar post={post} />
+          <Comment frontMatter={post} />
+        </article>
+      )}
+    </LayoutBase>
+  )
+}
+
+/**
+ * 글 목록 검색 레이아웃
+ */
+const LayoutPostList = props => {
+  const { posts } = props
+  return (
+    <LayoutBase {...props}>
+      <div className='mt-4 angular-custom-posts'>
+        {posts?.map(p => (
+          <BlogArchiveItem key={p.id} post={p} />
+        ))}
+      </div>
+    </LayoutBase>
+  )
+}
+
+/**
+ * 아카이브(타임라인) 레이아웃
+ */
+const LayoutArchive = props => {
+  const { archivePosts } = props
+  return (
+    <LayoutBase {...props}>
+      <div className='mb-10 pb-20 bg-white md:p-12 dark:bg-zinc-900 rounded-xl mt-4'>
+        {Object.keys(archivePosts || {}).map(archiveTitle => (
+          <div key={archiveTitle}>
+            <div className='pt-5 pb-4 text-2xl font-bold dark:text-gray-300'>{archiveTitle}</div>
+            <ul>
+              {archivePosts[archiveTitle]?.map(post => (
+                <li key={post.id} className='my-2'>
+                  <BlogArchiveItem post={post} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </LayoutBase>
+  )
+}
+
+/**
+ * 카테고리 인덱스 레이아웃
+ */
+const LayoutCategoryIndex = props => {
+  const { categoryOptions } = props
+  return (
+    <LayoutBase {...props}>
+      <div className='mt-4 dark:text-gray-300 flex flex-wrap gap-4'>
+        {categoryOptions?.map(c => (
+          <CategoryItem key={c.name} category={c.name} />
+        ))}
+      </div>
+    </LayoutBase>
+  )
+}
+
+/**
+ * 태그 인덱스 레이아웃
+ */
+const LayoutTagIndex = props => {
+  const { tagOptions } = props
+  return (
+    <LayoutBase {...props}>
+      <div className='mt-4 dark:text-gray-300 flex flex-wrap gap-2'>
+        {tagOptions?.map(t => (
+          <TagItemMini key={t.name} tag={t} />
+        ))}
+      </div>
+    </LayoutBase>
+  )
+}
+
+/**
+ * 대시보드 레이아웃
+ */
+const LayoutDashboard = props => {
+  return (
+    <LayoutBase {...props}>
+      <DashboardHeader />
+      <DashboardBody />
+    </LayoutBase>
+  )
+}
+
+/**
+ * 기타 필수 레이아웃 껍데기 선언 (에러 방지용)
+ */
+const LayoutSearch = props => <LayoutBase {...props} />
+const Layout404 = props => <LayoutBase {...props}><div className='text-center py-20 text-xl font-bold'>404 Not Found</div></LayoutBase>
+const LayoutSignIn = props => <LayoutBase {...props}><div className='flex justify-center items-center py-10'><SignIn /></div></LayoutBase>
+const LayoutSignUp = props => <LayoutBase {...props}><div className='flex justify-center items-center py-10'><SignUp /></div></LayoutBase>
 
 export {
   Layout404,

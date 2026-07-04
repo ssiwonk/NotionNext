@@ -62,6 +62,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
   localStorage.setItem('post_read_time', JSON.stringify(postReadTime))
 
   return allNavPages?.map(item => {
+    // 오브젝트 속성(...item)을 100% 유실 없이 안전하게 가공 바구니로 복사합니다.
     const res = {
       ...item,
       publishDate: item.publishDate || item.date || null 
@@ -124,23 +125,68 @@ const LayoutBase = props => {
       return true
     })
 
-    // ✨ [교정 반영] 생성일시가 아닌 'date' 기준으로 메뉴 정렬 수행
-    pages?.sort((a, b) => {
-      const timeA = a.date ? new Date(a.date).getTime() : 0
-      const timeB = b.date ? new Date(b.date).getTime() : 0
-      return timeA - timeB // 💡 오름차순 정렬 (내림차순을 원하시면 timeB - timeA 로 변경)
-    })
+    // 💡 [🔥 하이브리드 블록 구조화 그룹 정렬 로직]
+    if (pages) {
+      // 1) 메뉴 데이터군과 일반 포스트 데이터군을 완벽하게 격리 분리합니다.
+      const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
+      const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
 
-    // 정렬된 결과를 메뉴 전역 바구니에 저장합니다.
-    setFilteredNavPages(pages)
+      // 2) 부모 메뉴(Menu) 밑에 하위 자식 메뉴(SubMenu)들을 구조적으로 종속시켜 한 세트로 묶습니다.
+      const menuGroups = []
+      let currentGroup = null
+
+      menuItems.forEach(item => {
+        if (item.type === 'Menu') {
+          currentGroup = { parent: item, subMenus: [] }
+          menuGroups.push(currentGroup)
+        } else if (item.type === 'SubMenu') {
+          if (currentGroup) {
+            currentGroup.subMenus.push(item)
+          } else {
+            menuGroups.push({ parent: item, subMenus: [] })
+          }
+        }
+      })
+
+      // 3) 대메뉴 덩어리 그룹들을 사용자가 지정한 노션 date(publishDate) 오름차순 기준으로 정렬합니다.
+      menuGroups.sort((a, b) => {
+        const timeA = a.parent.publishDate ? new Date(a.parent.publishDate).getTime() : 0
+        const timeB = b.parent.publishDate ? new Date(b.parent.publishDate).getTime() : 0
+        return timeA - timeB
+      })
+
+      // 4) 대메뉴 내부 그룹에 갇힌 하위 자식 메뉴(SubMenu)들끼리도 각자의 date 기준으로 정렬합니다.
+      menuGroups.forEach(group => {
+        group.subMenus.sort((a, b) => {
+          const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
+          const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
+          return timeA - timeB
+        })
+      })
+
+      // 5) 구조 정렬이 완전히 완료된 메뉴 덩어리들을 일렬로 다시 평탄화 복원합니다.
+      const sortedMenus = []
+      menuGroups.forEach(group => {
+        sortedMenus.push(group.parent)
+        group.subMenus.forEach(sub => {
+          sortedMenus.push(sub)
+        })
+      })
+
+      // 6) 일반 알맹이 포스트 아이템들도 본연의 date 기준으로 정렬을 집행합니다.
+      postItems.sort((a, b) => {
+        const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
+        const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
+        return timeA - timeB
+      })
+
+      // 7) ❌ 절대 서로 간섭하여 섞이지 않도록 [정렬된 메뉴]는 무조건 앞쪽, [정렬된 포스트]는 무조건 뒤쪽으로 결합합니다.
+      const finalPages = [...sortedMenus, ...postItems]
+      setFilteredNavPages(finalPages)
+    } else {
+      setFilteredNavPages(pages)
+    }
   }, [router, allNavPages])
-
-  // 오직 왼쪽 사이드바(글 목록)만을 위한 독립된 날짜순 정렬 복사본을 생성합니다.
-  const sortedNavPagesForSidebar = filteredNavPages ? [...filteredNavPages].sort((a, b) => {
-    const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
-    const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-    return timeA - timeB 
-  }) : []
 
   const GITBOOK_LOADING_COVER = siteConfig(
     'GITBOOK_LOADING_COVER',
@@ -166,8 +212,8 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 💡 상단 네비게이션 바 컴포넌트에도 정렬 및 필터링이 완료된 배열을 명시적으로 주입합니다. */}
-        <Header {...props} allNavPages={filteredNavPages} />
+        {/* 💡 상단 메뉴바에 우리가 완벽하게 조립하고 분리 정렬해 낸 깨끗한 커스텀 메뉴 배열만 강제로 피딩합니다. */}
+        <Header {...props} customNav={filteredNavPages?.filter(item => item.type === 'Menu' || item.type === 'SubMenu')} />
 
         <main
           id='wrapper'
@@ -181,8 +227,8 @@ const LayoutBase = props => {
                   {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 왼쪽 글 목록 컴포넌트 */}
-                  <NavPostList filteredNavPages={sortedNavSidebar} {...props} allNavPages={sortedNavPagesForSidebar} />
+                  {/* 전체 글 목록에는 메뉴가 배제된 포스트 정렬 배열만 안전하게 넘겨줍니다. */}
+                  <NavPostList filteredNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} {...props} allNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} />
                 </div>
                 {/* 푸터 */}
                 <Footer {...props} />
@@ -253,8 +299,8 @@ const LayoutBase = props => {
         {/* 상단 이동 버튼 */}
         <JumpToTopButton />
 
-        {/* 모바일 네비게이션 드로어 서랍 */}
-        <PageNavDrawer {...props} filteredNavPages={sortedNavPagesForSidebar} allNavPages={sortedNavPagesForSidebar} />
+        {/* 모바일 네비게이션 드로어 */}
+        <PageNavDrawer {...props} filteredNavPages={filteredNavPages} allNavPages={filteredNavPages} />
 
         {/* 모바일 하단 메뉴 바 */}
         <BottomMenuBar {...props} />
@@ -263,7 +309,379 @@ const LayoutBase = props => {
   )
 }
 
-// ...이하 동일 코드는 지면 관계상 생략 (LayoutIndex, LayoutSlug 등 원본 유지)
+/**
+ * 메인 화면 (Index)
+ * 특정 문서 상세 페이지로 리다이렉트 처리
+ * @param {*} props
+ * @returns
+ */
+const LayoutIndex = props => {
+  const router = useRouter()
+  const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
+  const [hasRedirected, setHasRedirected] = useState(false)
+
+  useEffect(() => {
+    const tryRedirect = async () => {
+      if (!hasRedirected) {
+        setHasRedirected(true)
+
+        await router.push(index)
+
+        setTimeout(() => {
+          const article = document.querySelector(
+            '#article-wrapper #notion-article'
+          )
+          if (!article) {
+            console.log('노션 데이터베이스에 해당 slug 페이지가 있는지 확인해 주세요: ', index)
+
+            const containerInner = document.querySelector(
+              '#theme-gitbook #container-inner'
+            )
+            const newHTML = `<h1 class="text-3xl pt-12 dark:text-gray-300">설정 오류</h1><blockquote class="notion-quote notion-block-ce76391f3f2842d386468ff1eb705b92"><div>노션(Notion) 데이터베이스에 slug가 ${index}인 문서를 추가해 주세요.</div></blockquote>`
+            containerInner?.insertAdjacentHTML('afterbegin', newHTML)
+          }
+        }, 2000)
+      }
+    }
+
+    if (index) {
+      console.log('리다이렉트', index)
+      tryRedirect()
+    } else {
+      console.log('리다이렉트 없음', index)
+    }
+  }, [index, hasRedirected])
+
+  return null
+}
+
+/**
+ * 글 목록 (사용 안 함)
+ * 페이지 네비게이션으로 대체 처리
+ * @param {*} props
+ * @returns
+ */
+const LayoutPostList = props => {
+  return <></>
+}
+
+/**
+ * 글 상세 페이지 (Slug)
+ * @param {*} props
+ * @returns
+ */
+const LayoutSlug = props => {
+  const { post, prev, next, siteInfo, lock, validPassword } = props
+  const router = useRouter()
+  const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
+  const basePath = router.asPath.split('?')[0]
+  const title =
+    basePath?.indexOf(index) > 0
+      ? `${post?.title} | ${siteInfo?.description}`
+      : `${post?.title} | ${siteInfo?.title}`
+
+  const waiting404 = siteConfig('POST_WAITING_TIME_FOR_404') * 1000
+  
+  useEffect(() => {
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
+    
+    // [💡 본문 직접 주소 접근 방어선] scucontentspost 도메인인데 'scu' 태그가 없는 글 주소로 직접 치고 들어오면 404 차단
+    if (post) {
+      const hasScuTag = post.tags?.includes('scu') || 
+                        post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+                        
+      if (currentHost.includes('scucontentspost') && !hasScuTag) {
+        router.push('/404')
+        return
+      }
+    }
+
+    // 기본 404 예외 처리
+    if (!post) {
+      setTimeout(() => {
+        if (isBrowser) {
+          const article = document.querySelector(
+            '#article-wrapper #notion-article'
+          )
+          if (!article) {
+            router.push('/404').then(() => {
+              console.warn('페이지를 찾을 수 없음', router.asPath)
+            })
+          }
+        }
+      }, waiting404)
+    }
+  }, [post])
+  
+  return (
+    <>
+      <Head>
+        <title>{title}</title>
+      </Head>
+
+      {/* 글 잠금 (비밀번호) */}
+      {lock && <ArticleLock validPassword={validPassword} />}
+
+      {!lock && (
+        <div id='container'>
+          {/* 제목 */}
+          <h1 className='text-3xl pt-12  dark:text-gray-300'>
+            {siteConfig('POST_TITLE_ICON') && (
+              <NotionIcon icon={post?.pageIcon} />
+            )}
+            {post?.title}
+          </h1>
+
+          {/* 노션 본문 */}
+          {post && (
+            <section className='px-1'>
+              <div id='article-wrapper'>
+                <NotionPage post={post} />
+              </div>
+
+              {/* 공유 */}
+              <ShareBar post={post} />
+              
+              {/* 글 카테고리 및 태그 정보 */}
+              <div className='flex justify-between'>
+                {siteConfig('POST_DETAIL_CATEGORY') && post?.category && (
+                  <CategoryItem category={post.category} />
+                )}
+                <div>
+                  {siteConfig('POST_DETAIL_TAG') &&
+                    post?.tagItems?.map(tag => (
+                      <TagItemMini key={tag.name} tag={tag} />
+                    ))}
+                </div>
+              </div>
+
+              {post?.type === 'Post' && (
+                <ArticleAround prev={prev} next={next} />
+              )}
+
+              <Comment frontMatter={post} />
+            </section>
+          )}
+
+          {/* 글 목차 */}
+          <CatalogDrawerWrapper {...props} />
+        </div>
+      )}
+    </>
+  )
+}
+
+/**
+ * 검색 화면 (사용 안 함)
+ * 페이지 네비게이션으로 대체 처리
+ * @param {*} props
+ * @returns
+ */
+const LayoutSearch = props => {
+  return <></>
+}
+
+/**
+ * 아카이브(모아보기) 화면 (기본적으로 사용 안 함)
+ * 페이지 네비게이션으로 대체 처리
+ * @param {*} props
+ * @returns
+ */
+const LayoutArchive = props => {
+  const { archivePosts } = props
+
+  return (
+    <>
+      <div className='mb-10 pb-20 md:py-12 py-3  min-h-full'>
+        {Object.keys(archivePosts)?.map(archiveTitle => (
+          <BlogArchiveItem
+            key={archiveTitle}
+            archiveTitle={archiveTitle}
+            archivePosts={archivePosts}
+          />
+        ))}
+      </div>
+    </>
+  )
+}
+
+/**
+ * 404 페이지
+ * @param {*} props
+ * @returns
+ */
+const Layout404 = props => {
+  const router = useRouter()
+  const { locale } = useGlobal()
+  useEffect(() => {
+    setTimeout(() => {
+      const article = isBrowser && document.getElementById('article-wrapper')
+      if (!article) {
+        router.push('/').then(() => {
+          // console.log('找不到页面', router.asPath)
+        })
+      }
+    }, 3000)
+  }, [])
+
+  return (
+    <>
+      <div className='md:-mt-20 text-black w-full h-screen text-center justify-center content-center items-center flex flex-col'>
+        <div className='dark:text-gray-200'>
+          <h2 className='inline-block border-r-2 border-gray-600 mr-2 px-3 py-2 align-top'>
+            <i className='mr-2 fas fa-spinner animate-spin' />
+            404
+          </h2>
+          <div className='inline-block text-left h-32 leading-10 items-center'>
+            <h2 className='m-0 p-0'>{locale.NAV.PAGE_NOT_FOUND_REDIRECT}</h2>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+/**
+ * 카테고리 목록
+ */
+const LayoutCategoryIndex = props => {
+  const { categoryOptions } = props
+  const { locale } = useGlobal()
+  return (
+    <>
+      <div className='bg-white dark:bg-gray-700 py-10'>
+        <div className='dark:text-gray-200 mb-5'>
+          <i className='mr-4 fas fa-th' />
+          {locale.COMMON.CATEGORY}:
+        </div>
+        <div id='category-list' className='duration-200 flex flex-wrap'>
+          {categoryOptions?.map(category => {
+            return (
+              <SmartLink
+                key={category.name}
+                href={`/category/${category.name}`}
+                passHref
+                legacyBehavior>
+                <div
+                  className={
+                    'hover:text-black dark:hover:text-white dark:text-gray-300 dark:hover:bg-gray-600 px-5 cursor-pointer py-2 hover:bg-gray-100'
+                  }>
+                  <i className='mr-4 fas fa-folder' />
+                  {category.name}({category.count})
+                </div>
+              </SmartLink>
+            )
+          })}
+        </div>
+      </div>
+    </>
+  )
+}
+
+/**
+ * 태그 목록
+ */
+const LayoutTagIndex = props => {
+  const { tagOptions } = props
+  const { locale } = useGlobal()
+
+  return (
+    <>
+      <div className='bg-white dark:bg-gray-700 py-10'>
+        <div className='dark:text-gray-200 mb-5'>
+          <i className='mr-4 fas fa-tag' />
+          {locale.COMMON.TAGS}:
+        </div>
+        <div id='tags-list' className='duration-200 flex flex-wrap'>
+          {tagOptions?.map(tag => {
+            return (
+              <div key={tag.name} className='p-2'>
+                <TagItemMini key={tag.name} tag={tag} />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </>
+  )
+}
+
+/**
+ * 로그인 페이지
+ * @param {*} props
+ * @returns
+ */
+const LayoutSignIn = props => {
+  const { post } = props
+  const enableClerk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
+  return (
+    <>
+      <div className='grow mt-20'>
+        {enableClerk && (
+          <div className='flex justify-center py-6'>
+            <SignIn />
+          </div>
+        )}
+        <div id='article-wrapper'>
+          <NotionPage post={post} />
+        </div>
+      </div>
+    </>
+  )
+}
+
+/**
+ * 회원가입 페이지
+ * @param {*} props
+ * @returns
+ */
+const LayoutSignUp = props => {
+  const { post } = props
+  const enableClerk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
+  return (
+    <>
+      <div className='grow mt-20'>
+        {enableClerk && (
+          <div className='flex justify-center py-6'>
+            <SignUp />
+          </div>
+        )}
+        <div id='article-wrapper'>
+          <NotionPage post={post} />
+        </div>
+      </div>
+    </>
+  )
+}
+
+/**
+ * 대시보드
+ * @param {*} props
+ * @returns
+ */
+const LayoutDashboard = props => {
+  const { post } = props
+
+  return (
+    <>
+      <div className='container grow'>
+        <div className='flex flex-wrap justify-center -mx-4'>
+          <div id='container-inner' className='w-full p-4'>
+            {post && (
+              <div id='article-wrapper' className='mx-auto'>
+                <NotionPage {...props} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <DashboardHeader />
+      <DashboardBody />
+    </>
+  )
+}
 
 export {
   Layout404,

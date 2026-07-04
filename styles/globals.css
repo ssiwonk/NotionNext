@@ -319,7 +319,7 @@ body, h1, h2, h3, h4, h5, h6, input, textarea, select {
 .notion-text, 
 p, 
 .gitbook-content p { 
-  font-size: 1.2rem !important; 
+  font-size: 1.15rem !important; 
   line-height: 1.7 !important; 
   margin-top: 0.5rem !important; 
   margin-bottom: 0.1rem !important;
@@ -337,7 +337,7 @@ ol li,
   
   /* 2. 리스트 '하나' 내부에서 글자가 두 줄이 될 때의 줄간격 */
   line-height: 1.7 !important;  
-  font-size: 1.2rem !important;
+  font-size: 1.15rem !important;
 }
 
 /* [콜아웃] 본문 메인 영역의 콜아웃만 줄간격 및 글자크기 최적화 (사이드바 제외) */
@@ -351,7 +351,7 @@ main.notion .notion-callout-text * {
 .notion-page-link, 
 a[class*="page-link"], 
 .notion-page-shortcut {
-  font-size: 1.2rem !important; 
+  font-size: 1.15rem !important; 
   font-weight: 500 !important; 
 }
 
@@ -367,7 +367,7 @@ blockquote,
 .notion-equation, 
 .katex-display, 
 .katex { 
-  font-size: 1.2rem !important; 
+  font-size: 1.15rem !important; 
 }
 .katex span, 
 .notion-equation span { 
@@ -490,7 +490,7 @@ body, .notion, .notion-page {
 main.notion details.notion-toggle,
 main.notion details.notion-toggle summary,
 main.notion details.notion-toggle * {
-    font-size: 1.2rem !important;
+    font-size: 1.15rem !important;
 }
 
 /* [표] 일반 테이블 및 심플 테이블 내부의 모든 텍스트 크기 보정 */

@@ -62,13 +62,21 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
   localStorage.setItem('post_read_time', JSON.stringify(postReadTime))
 
   return allNavPages?.map(item => {
-    // 💡 [교정 1] 원본 오브젝트 속성(...item)을 100% 유실 없이 안전하게 복사하여 메뉴 계층 붕괴를 방지합니다.
     const res = {
-      ...item,
-      publishDate: item.publishDate || item.date || null 
+      short_id: item.short_id,
+      title: item.title || '',
+      pageCoverThumbnail: item.pageCoverThumbnail || '',
+      category: item.category || null,
+      tags: item.tags || null,
+      tagItems: item.tagItems || null,
+      summary: item.summary || null,
+      slug: item.slug,
+      href: item.href,
+      pageIcon: item.pageIcon || '',
+      lastEditedDate: item.lastEditedDate
     }
     if (
-      latestPosts && latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
+      latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
       (!postReadTime[item.short_id] ||
         postReadTime[item.short_id] < new Date(item.lastEditedDate).getTime())
     ) {
@@ -110,31 +118,24 @@ const LayoutBase = props => {
     // 2. 기본 최신글 마킹 데이터 생성
     let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
     
-    // 3. 주소에 따라 메뉴판 강제 필터링
+    // 3. [💡 1중 방어: 완벽한 태그 매칭 기법] 주소에 따라 메뉴판 강제 필터링
     pages = pages?.filter(item => {
       if (currentHost.includes('scucontentspost')) {
+        // 문자열 배열(tags)과 객체 배열(tagItems)을 모두 양방향 조사하여 'scu'가 있는지 철저히 검증
         const hasScuTag = item.tags?.includes('scu') || 
                            item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
         return hasScuTag
       }
       
       if (currentHost.includes('ssiwonkdocs')) {
-        return true 
+        return true // ssiwonkdocs 도메인은 무조건 전부 노출
       }
       
       return true
     })
 
-    // 💡 [교정 2] 전역 바구니에는 정렬을 절대 수행하지 않고 노션 원본 순서를 유지하여 상단 메뉴판 오류를 원천 차단합니다.
     setFilteredNavPages(pages)
   }, [router, allNavPages])
-
-  // 💡 [교정 3] 오직 왼쪽 사이드바(글 목록)만을 위한 독립된 날짜순 정렬 복사본을 생성합니다.
-  const sortedNavPagesForSidebar = filteredNavPages ? [...filteredNavPages].sort((a, b) => {
-    const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
-    const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-    return timeA - timeB 
-  }) : []
 
   const GITBOOK_LOADING_COVER = siteConfig(
     'GITBOOK_LOADING_COVER',
@@ -149,7 +150,7 @@ const LayoutBase = props => {
         changeTocVisible,
         filteredNavPages,
         setFilteredNavPages,
-        allNavPages: filteredNavPages, 
+        allNavPages: filteredNavPages, // [💡 2중 방어] 하위 컴포넌트가 원본 데이터를 요구해도 무조건 필터링된 데이터만 주도록 장악
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -160,7 +161,7 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 상단 네비게이션 바 (순정 오리지널 props 파이프라인 유지) */}
+        {/* 상단 네비게이션 바 */}
         <Header {...props} />
 
         <main
@@ -175,8 +176,8 @@ const LayoutBase = props => {
                   {/* 임베드 구역 */}
                   {slotLeft}
 
-                  {/* 💡 [교정 4] 왼쪽 글 목록 컴포넌트에는 정렬이 완료된 별도의 배열만 안전하게 주입합니다. */}
-                  <NavPostList filteredNavPages={sortedNavPagesForSidebar} {...props} allNavPages={sortedNavPagesForSidebar} />
+                  {/* 전체 글 목록 (props로 원본을 달라고 떼써도 무조건 걸러진 목록만 주입) */}
+                  <NavPostList filteredNavPages={filteredNavPages} {...props} allNavPages={filteredNavPages} />
                 </div>
                 {/* 푸터 */}
                 <Footer {...props} />
@@ -247,8 +248,8 @@ const LayoutBase = props => {
         {/* 상단 이동 버튼 */}
         <JumpToTopButton />
 
-        {/* 모바일 네비게이션 드로어 서랍에도 정렬된 배열을 독립 공급합니다. */}
-        <PageNavDrawer {...props} filteredNavPages={sortedNavPagesForSidebar} allNavPages={sortedNavPagesForSidebar} />
+        {/* 모바일 네비게이션 드로어 (모바일 서랍 메뉴도 필터링된 데이터만 넘겨줌) */}
+        <PageNavDrawer {...props} filteredNavPages={filteredNavPages} allNavPages={filteredNavPages} />
 
         {/* 모바일 하단 메뉴 바 */}
         <BottomMenuBar {...props} />

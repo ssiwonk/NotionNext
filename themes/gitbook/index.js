@@ -119,11 +119,10 @@ const LayoutBase = props => {
       const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
       const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
 
-      // 🔥 [핵심 수정] 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 '오름차순' 정렬합니다.
-      // 이렇게 하면 시간 순서대로 [대메뉴(과거) -> 하위메뉴(이후 생성)] 배치가 보장되어 기차칸 매칭이 깨지지 않습니다.
+      // 메뉴 아이템도 발행기준으로 변경. 이거였나? ㅜㅜ 
       menuItems.sort((a, b) => {
-        const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0
-        const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0
+        const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
+        const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
         return timeA - timeB // 오름차순 (과거 -> 최신순)
       })
 
@@ -330,8 +329,12 @@ const LayoutSlug = props => {
       const hasScuTag = post.tags?.includes('scu') || 
                         post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
                         
-      if (currentHost.includes('scucontentspost') && !hasScuTag) {
-        router.push('/404')
+      // 🔥 [안전장치] 현재 보고 있는 페이지가 무한 안내 페이지('scu404')라면 리다이렉션을 건너뜁니다.
+      const isScu404Page = post.slug === 'scu404' || router.asPath.includes('scu404')
+
+      if (currentHost.includes('scucontentspost') && !hasScuTag && !isScu404Page) {
+        // 🔥 무조건 404로 가는 대신, 노션에 생성한 'scu404' 페이지로 이동시킵니다.
+        router.push('/scu404')
         return
       }
     }

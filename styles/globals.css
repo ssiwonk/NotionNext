@@ -502,31 +502,21 @@ main.notion table td * {
     font-size: 1.1rem !important;
 }
 
-/* 데스크톱 화면에서 좌우 영역의 너비를 슬림하게 강제 조정 */
-@media (min-width: 1280px) {
-  /* 왼쪽 네비게이션 영역 크기 축소 */
-  #theme-hexo main > div:first-child, 
-  #theme-hexo .w-72 {
-    width: 240px !important; /* 기존 약 288px에서 240px로 축소 */
-    min-width: 240px !important;
-  }
-  
-  /* 오른쪽 사이드바 영역 크기 축소 */
-  #theme-hexo main > div:last-child, 
-  #theme-hexo .xl\:w-80 {
-    width: 250px !important; /* 기존 320px에서 250px로 축소 */
-    min-width: 250px !important;
-  }
+/* 1. 말줄임표 상위 구조(a 태그 및 부모 div)가 옆으로 늘어나지 못하도록 철저히 제한 */
+#theme-hexo aside a,
+#theme-hexo .cursor-pointer {
+  display: block !important;
+  overflow: hidden !important;
+  max-width: 100% !important;
 }
 
-/* 사이드바 제목 말줄임표 */
-#theme-hexo aside nav span,
-#theme-hexo aside .cursor-pointer span {
+/* 2. 실제 제목 텍스트 div에 확실하게 말줄임표(...) 적용 */
+#theme-hexo .cursor-pointer .select-none {
   display: block !important;
   white-space: nowrap !important;
   overflow: hidden !important;
-  text-overflow: ellipsis !important; /* '...' 처리 */
+  text-overflow: ellipsis !important;
   width: 100% !important;
+  max-width: 100% !important;
 }
-
 

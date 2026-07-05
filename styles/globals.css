@@ -508,3 +508,9 @@ main.notion table td * {
   overflow: hidden;        /* 2. 박스 너비를 벗어난 넘치는 글자는 숨김 */
   text-overflow: ellipsis; /* 3. 숨겨진 글자 끝에 말줄임표(...)를 표시 */ 
 }
+
+/* 사이트 전체 최대 너비를 줄여주는 코드 */
+#theme-hexo .max-w-\[86rem\], 
+#theme-hexo .max-w-7xl {
+  max-width: 1150px !important; /* 기본 약 1370px에서 1150px로 축소 */
+}

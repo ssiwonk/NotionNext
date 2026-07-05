@@ -119,18 +119,19 @@ const LayoutBase = props => {
       const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
       const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
 
-      // 메뉴 아이템도 발행기준으로 변경. 이거였나? ㅜㅜ 
+      // 🔥 [핵심 수정] 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 '오름차순' 정렬합니다.
+      // 안되더라... 이렇게 하면 시간 순서대로 [대메뉴(과거) -> 하위메뉴(이후 생성)] 배치가 보장되어 기차칸 매칭이 깨지지 않습니다.
       menuItems.sort((a, b) => {
-        const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
-        const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-        return timeA - timeB // 오름차순 (과거 -> 최신순)
+        const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0
+        const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0
+        return timeB - timeA // 내림차순이 변경안되더라
       })
 
       // 4. 일반 포스트들도 원하는 대로 date 기준 오름차순 정렬
       postItems.sort((a, b) => {
         const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
         const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-        return timeA - timeB // 오름차순
+        return timeB - timeA // 내림차순이 맞다
       })
 
       // 5. 정렬 완료된 메뉴와 포스트 결합

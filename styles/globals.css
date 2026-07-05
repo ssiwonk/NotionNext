@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+@font-face {
+    font-family: 'NanumBarunPen';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunpen.woff') format('woff');
+    font-weight: normal;
+    font-display: swap;
+}
 
 /* ==========================================
     1. 시스템 기본 레이아웃 및 환경 설정
@@ -507,11 +513,12 @@ main.notion table td * {
   white-space: nowrap;     /* 1. 글자가 다음 줄로 넘어가지 않도록 강제 한 줄 처리 */
   overflow: hidden;        /* 2. 박스 너비를 벗어난 넘치는 글자는 숨김 */
   text-overflow: ellipsis; /* 3. 숨겨진 글자 끝에 말줄임표(...)를 표시 */ 
+  font-family: 'NanumBarunPen';
 }
 
-/* 원래 1280px(xl)부터 보이던 영역을 1000px부터 보이도록 강제 변경 */
+/* 1536px(2xl)부터 보이던 우측 영역을 1100px부터 보이도록 변경 */
 @media (min-width: 1100px) {
-  #theme-hexo .xl\:block {
+  #theme-hexo [class*="2xl:block"] {
     display: block !important;
   }
 }

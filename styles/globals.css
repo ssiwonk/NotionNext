@@ -509,8 +509,9 @@ main.notion table td * {
   text-overflow: ellipsis; /* 3. 숨겨진 글자 끝에 말줄임표(...)를 표시 */ 
 }
 
-/* 사이트 전체 최대 너비를 줄여주는 코드 */
-#theme-hexo .max-w-\[86rem\], 
-#theme-hexo .max-w-7xl {
-  max-width: 1150px !important; /* 기본 약 1370px에서 1150px로 축소 */
+/* 원래 1280px(xl)부터 보이던 영역을 1000px부터 보이도록 강제 변경 */
+@media (min-width: 1100px) {
+  #theme-hexo .xl\:block {
+    display: block !important;
+  }
 }

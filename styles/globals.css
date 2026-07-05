@@ -503,7 +503,7 @@ main.notion table td * {
 }
 
 /* 말줄임표 */
-.w-full select-none {
+.select-none {
   white-space: nowrap;     /* 1. 글자가 다음 줄로 넘어가지 않도록 강제 한 줄 처리 */
   overflow: hidden;        /* 2. 박스 너비를 벗어난 넘치는 글자는 숨김 */
   text-overflow: ellipsis; /* 3. 숨겨진 글자 끝에 말줄임표(...)를 표시 */ 

@@ -1,3 +1,5 @@
+// clerk 삭제
+
 'use client'
 
 import Comment from '@/components/Comment'
@@ -13,7 +15,6 @@ import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { isBrowser } from '@/lib/utils'
 import { getShortId } from '@/lib/utils/pageId'
-import { SignIn, SignUp } from '@clerk/nextjs'
 import dynamic from 'next/dynamic'
 import Head from 'next/head'
 import SmartLink from '@/components/SmartLink'
@@ -331,7 +332,7 @@ const LayoutSlug = props => {
       const hasScuTag = post.tags?.includes('scu') || 
                         post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
                         
-      if (currentHost.includes('scucontentspost') && !hasScuTag) {
+      if (currentHost.includes('scucontentspost')) && !hasScuTag) {
         router.push('/404')
         return
       }
@@ -515,15 +516,9 @@ const LayoutTagIndex = props => {
 
 const LayoutSignIn = props => {
   const { post } = props
-  const enableClerk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   return (
     <>
       <div className='grow mt-20'>
-        {enableClerk && (
-          <div className='flex justify-center py-6'>
-            <SignIn />
-          </div>
-        )}
         <div id='article-wrapper'>
           <NotionPage post={post} />
         </div>
@@ -534,15 +529,9 @@ const LayoutSignIn = props => {
 
 const LayoutSignUp = props => {
   const { post } = props
-  const enableClerk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   return (
     <>
       <div className='grow mt-20'>
-        {enableClerk && (
-          <div className='flex justify-center py-6'>
-            <SignUp />
-          </div>
-        )}
         <div id='article-wrapper'>
           <NotionPage post={post} />
         </div>

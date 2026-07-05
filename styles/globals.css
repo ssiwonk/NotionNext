@@ -516,9 +516,9 @@ main.notion table td * {
   font-family: 'NanumBarunPen';
 }
 
-/* 1536px(2xl)부터 보이던 우측 영역을 1100px부터 보이도록 변경 */
+/* 복잡한 '2xl:block' 글자를 피해 구조(main 안의 w-72)로 강제 필살기 적용 */
 @media (min-width: 1100px) {
-  #theme-hexo [class*="2xl:block"] {
+  main > div.w-72 {
     display: block !important;
   }
 }

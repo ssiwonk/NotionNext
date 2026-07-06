@@ -525,15 +525,15 @@ main.notion table td * {
 
 /* 1. 전체 글머리 기호(Bullet List)의 왼쪽 들여쓰기 여백 축소 */
 #article-wrapper ul.notion-list-disc {
-    padding-left: 1.2rem !important; /* 이 값을 줄일수록 목록 전체가 왼쪽으로 바짝 붙습니다. (예: 1rem, 1.2rem 등) */
+    padding-left: 1.0rem !important; /* 이 값을 줄일수록 목록 전체가 왼쪽으로 바짝 붙습니다. (예: 1rem, 1.2rem 등) */
 }
 
 /* 2. 중첩 구조인 첫 번째 항목의 위치가 어긋나지 않도록 미세 보정 */
 #article-wrapper .notion-list-item-sub {
-    padding-left: 0.8rem !important; /* 첫 번째 점과 두 번째 점의 좌우 위치가 완벽히 일치하도록 이 값을 미세하게 조절해 주세요 */
+    padding-left: 0.5rem !important; /* 첫 번째 점과 두 번째 점의 좌우 위치가 완벽히 일치하도록 이 값을 미세하게 조절해 주세요 */
 }
 
 /* 3. 목록 내부 아이템의 불릿 점과 텍스트 사이의 간격 조정 (필요시 사용) */
 #article-wrapper .notion-list-disc li {
-    padding-left: 1.0rem !important; /* 점(•)과 글자 사이의 간격이 너무 넓다면 이 값을 줄이세요 */
+    padding-left: 0.5rem !important; /* 점(•)과 글자 사이의 간격이 너무 넓다면 이 값을 줄이세요 */
 }

@@ -49,6 +49,27 @@ const ThemeGlobalGitbook = createContext()
 export const useGitBookGlobal = () => useContext(ThemeGlobalGitbook)
 
 /**
+ * 🔥 [추가] 상위 페이지의 태그 권한을 재귀적으로 상속받았는지 확인하는 함수
+ */
+function checkScuTagInherited(page, allPagesMap) {
+  if (!page) return false
+
+  // 1. 현재 페이지 자체에 scu 태그가 있는지 확인
+  const hasScuTag = page.tags?.includes('scu') || 
+                    page.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+  if (hasScuTag) return true
+
+  // 2. 자체 태그가 없다면, 상위 페이지(parentId)를 찾아서 재귀적으로 확인
+  const parentId = page.parentId || page.parent_id
+  if (parentId) {
+    const parentPage = allPagesMap.get(parentId)
+    return checkScuTagInherited(parentPage, allPagesMap)
+  }
+
+  return false
+}
+
+/**
  * 최신 글에 빨간 점 표시
  */
 function getNavPagesWithLatest(allNavPages, latestPosts, post) {
@@ -104,12 +125,14 @@ const LayoutBase = props => {
     // 1. 기본 마킹 데이터 확보
     let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
     
+    // 🔥 [수정] 빠른 상위 조회를 위해 ID 기반의 Map 객체 생성
+    const allPagesMap = new Map(pages?.map(p => [p.id, p]) || [])
+    
     // 2. 도메인별 필터링
     pages = pages?.filter(item => {
       if (currentHost.includes('scucontentspost')) {
-        const hasScuTag = item.tags?.includes('scu') || 
-                          item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
-        return hasScuTag
+        // 🔥 상속 관계를 고려하여 scu 권한 체크
+        return checkScuTagInherited(item, allPagesMap)
       }
       return true
     })
@@ -119,19 +142,18 @@ const LayoutBase = props => {
       const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
       const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
 
-      // 🔥 [핵심 수정] 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 '오름차순' 정렬합니다.
-      // 안되더라... 이렇게 하면 시간 순서대로 [대메뉴(과거) -> 하위메뉴(이후 생성)] 배치가 보장되어 기차칸 매칭이 깨지지 않습니다.
+      // 메뉴 아이템 정렬
       menuItems.sort((a, b) => {
         const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0
         const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0
-        return timeB - timeA // 내림차순이 변경안되더라
+        return timeB - timeA
       })
 
-      // 4. 일반 포스트들도 원하는 대로 date 기준 오름차순 정렬
+      // 일반 포스트 정렬
       postItems.sort((a, b) => {
         const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
         const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-        return timeB - timeA // 내림차순이 맞다
+        return timeB - timeA
       })
 
       // 5. 정렬 완료된 메뉴와 포스트 결합
@@ -166,7 +188,6 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 상단 헤더에 오름차순 정렬된 메뉴 데이터 주입 및 원본 오버라이드 */}
         <Header 
           {...props} 
           allNavPages={filteredNavPages}
@@ -176,14 +197,12 @@ const LayoutBase = props => {
         <main
           id='wrapper'
           className={`${siteConfig('LAYOUT_SIDEBAR_REVERSE') ? 'flex-row-reverse' : ''} relative flex justify-between w-full gap-x-6 h-full mx-auto max-w-screen-4xl`}>
-          {/* 왼쪽 사이드바 메뉴판 */}
           {fullWidth ? null : (
             <div className={'hidden md:block relative z-10 '}>
               <div className='w-80 pt-14 pb-4 sticky top-0 h-screen flex justify-between flex-col'>
                 <div className='overflow-y-scroll scroll-hidden pt-10 pl-5'>
                   {slotLeft}
 
-                  {/* 글 목록 컴포넌트에도 정렬된 데이터 강제 피딩 */}
                   <NavPostList 
                     {...props} 
                     allNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} 
@@ -195,7 +214,6 @@ const LayoutBase = props => {
             </div>
           )}
 
-          {/* 중앙 콘텐츠 영역 */}
           <div
             id='center-wrapper'
             className='flex flex-col justify-between w-full relative z-10 pt-14 min-h-screen'>
@@ -216,7 +234,6 @@ const LayoutBase = props => {
             </div>
           </div>
 
-          {/* 우측 사이드바 */}
           {fullWidth ? null : (
             <div
               className={
@@ -253,7 +270,6 @@ const LayoutBase = props => {
 
         <JumpToTopButton />
 
-        {/* 모바일 메뉴 드로어 */}
         <PageNavDrawer 
           {...props} 
           filteredNavPages={filteredNavPages} 
@@ -312,7 +328,8 @@ const LayoutPostList = props => {
  * 글 상세 페이지 (Slug)
  */
 const LayoutSlug = props => {
-  const { post, prev, next, siteInfo, lock, validPassword } = props
+  // 🔥 [수정] props에서 전체 페이지 목록인 allNavPages를 함께 구조분해 할당합니다.
+  const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
   const router = useRouter()
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
   const basePath = router.asPath.split('?')[0]
@@ -327,8 +344,9 @@ const LayoutSlug = props => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
     if (post) {
-      const hasScuTag = post.tags?.includes('scu') || 
-                        post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+      // 🔥 [수정] 전체 페이지 맵을 생성하여 상속 권한을 체크합니다.
+      const allPagesMap = new Map(allNavPages?.map(p => [p.id, p]) || [])
+      const hasScuTag = checkScuTagInherited(post, allPagesMap)
                         
       // 🔥 [안전장치] 현재 보고 있는 페이지가 무한 안내 페이지('scu404')라면 리다이렉션을 건너뜁니다.
       const isScu404Page = post.slug === 'scu404' || router.asPath.includes('scu404')
@@ -354,7 +372,7 @@ const LayoutSlug = props => {
         }
       }, waiting404)
     }
-  }, [post])
+  }, [post, allNavPages]) // 🔥 의존성 배열에 allNavPages 추가
   
   return (
     <>

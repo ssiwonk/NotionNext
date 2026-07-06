@@ -530,10 +530,10 @@ main.notion table td * {
 
 /* 2. 중첩 구조인 첫 번째 항목의 위치가 어긋나지 않도록 미세 보정 */
 #article-wrapper .notion-list-item-sub {
-    padding-left: 0.5rem !important; /* 첫 번째 점과 두 번째 점의 좌우 위치가 완벽히 일치하도록 이 값을 미세하게 조절해 주세요 */
+    padding-left: 0.3rem !important; /* 첫 번째 점과 두 번째 점의 좌우 위치가 완벽히 일치하도록 이 값을 미세하게 조절해 주세요 */
 }
 
 /* 3. 목록 내부 아이템의 불릿 점과 텍스트 사이의 간격 조정 (필요시 사용) */
 #article-wrapper .notion-list-disc li {
-    padding-left: 0.5rem !important; /* 점(•)과 글자 사이의 간격이 너무 넓다면 이 값을 줄이세요 */
+    padding-left: 0.3rem !important; /* 점(•)과 글자 사이의 간격이 너무 넓다면 이 값을 줄이세요 */
 }

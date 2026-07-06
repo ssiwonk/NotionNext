@@ -119,19 +119,18 @@ const LayoutBase = props => {
       const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
       const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
 
-      // 🔥 [핵심 수정] 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 '오름차순' 정렬합니다.
-      // 안되더라... 이렇게 하면 시간 순서대로 [대메뉴(과거) -> 하위메뉴(이후 생성)] 배치가 보장되어 기차칸 매칭이 깨지지 않습니다.
+      // 🔥 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 '내림차순' 정렬합니다.
       menuItems.sort((a, b) => {
         const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0
         const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0
-        return timeB - timeA // 내림차순이 변경안되더라
+        return timeB - timeA 
       })
 
-      // 4. 일반 포스트들도 원하는 대로 date 기준 오름차순 정렬
+      // 4. 일반 포스트들도 원하는 대로 date 기준 내림차순 정렬
       postItems.sort((a, b) => {
         const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
         const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-        return timeB - timeA // 내림차순이 맞다
+        return timeB - timeA 
       })
 
       // 5. 정렬 완료된 메뉴와 포스트 결합
@@ -166,7 +165,7 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 상단 헤더에 오름차순 정렬된 메뉴 데이터 주입 및 원본 오버라이드 */}
+        {/* 상단 헤더에 내림차순 정렬된 메뉴 데이터 주입 및 원본 오버라이드 */}
         <Header 
           {...props} 
           allNavPages={filteredNavPages}
@@ -308,22 +307,51 @@ const LayoutPostList = props => {
   return <></>
 }
 
-// 🔥 [추가] 안전하게 연월일(YYYY년 M월 D일) 형태로 포맷팅하는 함수
-// 서버/클라이언트 시차 오류(Hydration)를 방지하기 위해 문자열 파싱 방식을 사용합니다.
-const formatKoreanDate = (dateString) => {
-  if (!dateString) return ''
+// 🔥 [예외 처리 보강] 안전하게 연월일(YYYY년 M월 D일) 형태로 포맷팅하는 함수
+// 데이터 형식이 깨진 하위 인라인 페이지 데이터가 들어와도 에러를 뱉지 않고 빌드 다운을 막아줍니다.
+const formatKoreanDate = (dateVal) => {
+  if (!dateVal) return ''
   
-  // 2026/07/05 또는 2026-07-05 형태에서 숫자만 추출
-  const parts = dateString.split(/[-/.\s]/).filter(Boolean)
-  
-  if (parts.length >= 3) {
-    const year = parts[0]
-    const month = parseInt(parts[1], 10) // 07 -> 7
-    const day = parseInt(parts[2], 10)   // 05 -> 5
-    return `${year}년 ${month}월 ${day}일`
+  try {
+    // 1. 순수 문자열 형태인 경우 (예: '2026/07/05' 또는 '2026-07-05')
+    if (typeof dateVal === 'string') {
+      const parts = dateVal.split(/[-/.\s]/).filter(Boolean)
+      if (parts.length >= 3) {
+        const year = parts[0]
+        const month = parseInt(parts[1], 10)
+        const day = parseInt(parts[2], 10)
+        if (!isNaN(month) && !isNaN(day)) {
+          return `${year}년 ${month}월 ${day}일`
+        }
+      }
+      
+      // 타임스탬프 형태의 문자열 처리
+      if (/^\d+$/.test(dateVal)) {
+        const dateObj = new Date(parseInt(dateVal, 10))
+        if (!isNaN(dateObj.getTime())) {
+          return `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일`
+        }
+      }
+      return dateVal
+    }
+    
+    // 2. 정수 타임스탬프 숫자인 경우 처리
+    if (typeof dateVal === 'number') {
+      const dateObj = new Date(dateVal)
+      if (!isNaN(dateObj.getTime())) {
+        return `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일`
+      }
+    }
+    
+    // 3. Date 객체 타입인 경우 처리
+    if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
+      return `${dateVal.getFullYear()}년 ${dateVal.getMonth() + 1}월 ${dateVal.getDate()}일`
+    }
+  } catch (error) {
+    console.error('날짜 포맷팅 중 예측하지 못한 필드 오동작:', error)
   }
   
-  return dateString // 파싱 실패 시 원본 반환
+  return '' // 문자열 파싱이 불가능한 잘못된 오브젝트 데이터가 오면 빈 문자열을 반환하여 렌더링 스킵
 }
 
 /**
@@ -379,6 +407,9 @@ const LayoutSlug = props => {
     }
   }, [post, router.asPath, allNavPages])
   
+  // 렌더링에 사용할 최종 한글 연월일 문자열 추출
+  const formattedDateString = post ? formatKoreanDate(post.publishDate || post.date) : ''
+
   return (
     <>
       <Head>
@@ -397,13 +428,13 @@ const LayoutSlug = props => {
             {post?.title}
           </h1>
 
-          {/* 🔥 [추가] 제목 바로 아래에 연월일 형태로 포맷팅된 날짜 노출 */}
-          {(post?.publishDate || post?.date) && (
+          {/* 🔥 [수정] 정상적인 날짜 문자열이 최종 검증 통과했을 때만 화면에 랜더링 */}
+          {formattedDateString && (
             <div className='text-sm text-gray-400 dark:text-gray-500 mt-3 pb-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-1.5'>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
-              <span>{formatKoreanDate(post.publishDate || post.date)}</span>
+              <span>{formattedDateString}</span>
             </div>
           )}
 

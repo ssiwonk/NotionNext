@@ -308,11 +308,28 @@ const LayoutPostList = props => {
   return <></>
 }
 
+// 🔥 [추가] 안전하게 연월일(YYYY년 M월 D일) 형태로 포맷팅하는 함수
+// 서버/클라이언트 시차 오류(Hydration)를 방지하기 위해 문자열 파싱 방식을 사용합니다.
+const formatKoreanDate = (dateString) => {
+  if (!dateString) return ''
+  
+  // 2026/07/05 또는 2026-07-05 형태에서 숫자만 추출
+  const parts = dateString.split(/[-/.\s]/).filter(Boolean)
+  
+  if (parts.length >= 3) {
+    const year = parts[0]
+    const month = parseInt(parts[1], 10) // 07 -> 7
+    const day = parseInt(parts[2], 10)   // 05 -> 5
+    return `${year}년 ${month}월 ${day}일`
+  }
+  
+  return dateString // 파싱 실패 시 원본 반환
+}
+
 /**
  * 글 상세 페이지 (Slug)
  */
 const LayoutSlug = props => {
-  // props에서 allNavPages를 함께 구조 분해 할당합니다.
   const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
   const router = useRouter()
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
@@ -328,29 +345,20 @@ const LayoutSlug = props => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
     if (post) {
-      // 1. [조건 체크] 해당 노트가 메인 노션 DB에 등록된 아이템인지 확인
-      // DB에 행으로 등록된 메인 페이지는 Post, Page, Menu 등의 type을 가집니다.
-      // 더 확실히 하기 위해 전체 네비게이션 페이지 목록(allNavPages)에 포함되어 있는지도 체크합니다.
       const isDbItem = (post.type && ['Post', 'Page', 'Menu', 'SubMenu'].includes(post.type)) ||
                        allNavPages?.some(navPage => navPage.id === post.id || navPage.short_id === post.short_id)
                        
-      // 🔥 [안전장치] 현재 보고 있는 페이지가 무한 안내 페이지('scu404')라면 리다이렉션을 건너뜁니다.
       const isScu404Page = post.slug === 'scu404' || router.asPath.includes('scu404')
 
       if (currentHost.includes('scucontentspost') && !isScu404Page) {
         if (isDbItem) {
-          // 2. DB에 등록된 메인 노트인 경우 -> 기존대로 'scu' 태그가 있는지 검사
           const hasScuTag = post.tags?.includes('scu') || 
                             post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
                             
           if (!hasScuTag) {
-            // 태그에 scu가 없으면 비공개 안내 페이지('scu404')로 이동시킵니다.
             router.push('/scu404')
             return
           }
-        } else {
-          // 3. DB에 등록되지 않은 노트(문서 내부 하위 페이지, 리스트/갤러리 아이템 등)라면 검사를 패스하고 모두 공개
-          console.log('DB 미등록 하위 콘텐츠이므로 접근을 허용합니다:', post.title)
         }
       }
     }
@@ -369,7 +377,7 @@ const LayoutSlug = props => {
         }
       }, waiting404)
     }
-  }, [post, router.asPath, allNavPages]) // 의존성 배열에 의존 변수들을 추가하여 정확히 작동하도록 합니다.
+  }, [post, router.asPath, allNavPages])
   
   return (
     <>
@@ -381,22 +389,33 @@ const LayoutSlug = props => {
 
       {!lock && (
         <div id='container' className='w-full'>
-          <h1 className='text-3xl pt-12  dark:text-gray-300'>
+          {/* 본문 제목 영역 */}
+          <h1 className='text-3xl pt-12 font-bold dark:text-gray-300'>
             {siteConfig('POST_TITLE_ICON') && (
               <NotionIcon icon={post?.pageIcon} />
             )}
             {post?.title}
           </h1>
 
+          {/* 🔥 [추가] 제목 바로 아래에 연월일 형태로 포맷팅된 날짜 노출 */}
+          {(post?.publishDate || post?.date) && (
+            <div className='text-sm text-gray-400 dark:text-gray-500 mt-3 pb-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-1.5'>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <span>{formatKoreanDate(post.publishDate || post.date)}</span>
+            </div>
+          )}
+
           {post && (
-            <section className='px-1'>
+            <section className='px-1 mt-6'>
               <div id='article-wrapper'>
                 <NotionPage post={post} />
               </div>
 
               <ShareBar post={post} />
               
-              <div className='flex justify-between'>
+              <div className='flex justify-between mt-6'>
                 {siteConfig('POST_DETAIL_CATEGORY') && post?.category && (
                   <CategoryItem category={post.category} />
                 )}

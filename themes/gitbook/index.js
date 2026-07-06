@@ -49,27 +49,6 @@ const ThemeGlobalGitbook = createContext()
 export const useGitBookGlobal = () => useContext(ThemeGlobalGitbook)
 
 /**
- * 🔥 [추가] 상위 페이지의 태그 권한을 재귀적으로 상속받았는지 확인하는 함수
- */
-function checkScuTagInherited(page, allPagesMap) {
-  if (!page) return false
-
-  // 1. 현재 페이지 자체에 scu 태그가 있는지 확인
-  const hasScuTag = page.tags?.includes('scu') || 
-                    page.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
-  if (hasScuTag) return true
-
-  // 2. 자체 태그가 없다면, 상위 페이지(parentId)를 찾아서 재귀적으로 확인
-  const parentId = page.parentId || page.parent_id
-  if (parentId) {
-    const parentPage = allPagesMap.get(parentId)
-    return checkScuTagInherited(parentPage, allPagesMap)
-  }
-
-  return false
-}
-
-/**
  * 최신 글에 빨간 점 표시
  */
 function getNavPagesWithLatest(allNavPages, latestPosts, post) {
@@ -125,14 +104,12 @@ const LayoutBase = props => {
     // 1. 기본 마킹 데이터 확보
     let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
     
-    // 🔥 [수정] 빠른 상위 조회를 위해 ID 기반의 Map 객체 생성
-    const allPagesMap = new Map(pages?.map(p => [p.id, p]) || [])
-    
-    // 2. 도메인별 필터링
+    // 2. 도메인별 필터링 (사이드바 메뉴 및 글 목록에 보여줄 대상)
     pages = pages?.filter(item => {
       if (currentHost.includes('scucontentspost')) {
-        // 🔥 상속 관계를 고려하여 scu 권한 체크
-        return checkScuTagInherited(item, allPagesMap)
+        const hasScuTag = item.tags?.includes('scu') || 
+                          item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+        return hasScuTag
       }
       return true
     })
@@ -325,10 +302,9 @@ const LayoutPostList = props => {
 }
 
 /**
- * 글 상세 페이지 (Slug)
+ * 글 상세 페이지 (Slug) - 권한 검사 핵심 로직 포함
  */
 const LayoutSlug = props => {
-  // 🔥 [수정] props에서 전체 페이지 목록인 allNavPages를 함께 구조분해 할당합니다.
   const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
   const router = useRouter()
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
@@ -344,15 +320,28 @@ const LayoutSlug = props => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
     if (post) {
-      // 🔥 [수정] 전체 페이지 맵을 생성하여 상속 권한을 체크합니다.
-      const allPagesMap = new Map(allNavPages?.map(p => [p.id, p]) || [])
-      const hasScuTag = checkScuTagInherited(post, allPagesMap)
+      // 🔥 [핵심 수정] 하이픈 유무와 관계없이 완벽히 매칭하기 위해 ID 변환 공통 함수 정의
+      const cleanId = id => id ? id.replace(/-/g, '') : ''
+      const currentPostId = cleanId(post.id)
+
+      // 1. 현재 주소창에 들어온 페이지가 메인 블로그 글 목록(allNavPages)에 존재하는 글인지 판별
+      const mainDatabasePost = allNavPages?.find(p => cleanId(p.id) === currentPostId)
+
+      let isAllowed = false
+
+      if (mainDatabasePost) {
+        // [경우 A] 메인 데이터베이스에 단독으로 등록된 일반 포스트라면 -> 반드시 'scu' 태그가 있어야 진입 허용
+        isAllowed = mainDatabasePost.tags?.includes('scu') || 
+                    mainDatabasePost.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+      } else {
+        // [경우 B] 메인 목록에 아예 없는 글이라면 -> '테스트 문서' 내부에 빌트인된 하위 페이지/리스트/갤러리 블록이므로 허용
+        isAllowed = true
+      }
                         
-      // 🔥 [안전장치] 현재 보고 있는 페이지가 무한 안내 페이지('scu404')라면 리다이렉션을 건너뜁니다.
+      // 안전장치: 무한 안내 페이지인 'scu404' 자체는 리다이렉트 예외 처리
       const isScu404Page = post.slug === 'scu404' || router.asPath.includes('scu404')
 
-      if (currentHost.includes('scucontentspost') && !hasScuTag && !isScu404Page) {
-        // 🔥 무조건 404로 가는 대신, 노션에 생성한 'scu404' 페이지로 이동시킵니다.
+      if (currentHost.includes('scucontentspost') && !isAllowed && !isScu404Page) {
         router.push('/scu404')
         return
       }
@@ -372,7 +361,7 @@ const LayoutSlug = props => {
         }
       }, waiting404)
     }
-  }, [post, allNavPages]) // 🔥 의존성 배열에 allNavPages 추가
+  }, [post, allNavPages])
   
   return (
     <>

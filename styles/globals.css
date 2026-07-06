@@ -325,7 +325,7 @@ body, h1, h2, h3, h4, h5, h6, input, textarea, select {
 .notion-text, 
 p, 
 .gitbook-content p { 
-  font-size: 1.15rem !important; 
+  font-size: 1.1rem !important; 
   line-height: 1.7 !important; 
   margin-top: 0.5rem !important; 
   margin-bottom: 0.1rem !important;
@@ -343,7 +343,7 @@ ol li,
   
   /* 2. 리스트 '하나' 내부에서 글자가 두 줄이 될 때의 줄간격 */
   line-height: 1.7 !important;  
-  font-size: 1.15rem !important;
+  font-size: 1.1rem !important;
 }
 
 /* [콜아웃] 본문 메인 영역의 콜아웃만 줄간격 및 글자크기 최적화 (사이드바 제외) */
@@ -357,7 +357,7 @@ main.notion .notion-callout-text * {
 .notion-page-link, 
 a[class*="page-link"], 
 .notion-page-shortcut {
-  font-size: 1.15rem !important; 
+  font-size: 1.1rem !important; 
   font-weight: 500 !important; 
 }
 
@@ -373,7 +373,7 @@ blockquote,
 .notion-equation, 
 .katex-display, 
 .katex { 
-  font-size: 1.15rem !important; 
+  font-size: 1.1rem !important; 
 }
 .katex span, 
 .notion-equation span { 
@@ -496,7 +496,7 @@ body, .notion, .notion-page {
 main.notion details.notion-toggle,
 main.notion details.notion-toggle summary,
 main.notion details.notion-toggle * {
-    font-size: 1.15rem !important;
+    font-size: 1.1rem !important;
 }
 
 /* [표] 일반 테이블 및 심플 테이블 내부의 모든 텍스트 크기 보정 */
@@ -521,4 +521,19 @@ main.notion table td * {
   main > div.w-72 {
     display: block !important;
   }
+}
+
+/* 1. 전체 글머리 기호(Bullet List)의 왼쪽 들여쓰기 여백 축소 */
+#article-wrapper ul.notion-list-disc {
+    padding-left: 1.2rem !important; /* 이 값을 줄일수록 목록 전체가 왼쪽으로 바짝 붙습니다. (예: 1rem, 1.2rem 등) */
+}
+
+/* 2. 중첩 구조인 첫 번째 항목의 위치가 어긋나지 않도록 미세 보정 */
+#article-wrapper .notion-list-item-sub {
+    padding-left: 0.8rem !important; /* 첫 번째 점과 두 번째 점의 좌우 위치가 완벽히 일치하도록 이 값을 미세하게 조절해 주세요 */
+}
+
+/* 3. 목록 내부 아이템의 불릿 점과 텍스트 사이의 간격 조정 (필요시 사용) */
+#article-wrapper .notion-list-disc li {
+    padding-left: 1.0rem !important; /* 점(•)과 글자 사이의 간격이 너무 넓다면 이 값을 줄이세요 */
 }

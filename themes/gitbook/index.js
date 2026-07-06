@@ -155,6 +155,7 @@ const LayoutBase = props => {
         filteredNavPages,
         setFilteredNavPages,
         allNavPages: filteredNavPages, 
+        rawAllNavPages: allNavPages, // 🔥 [핵심 수정] 필터링되지 않은 노션 DB 원본 전체 행 데이터를 컨텍스트에 주입
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -305,7 +306,9 @@ const LayoutPostList = props => {
  * 글 상세 페이지 (Slug) - 권한 검사 핵심 로직 포함
  */
 const LayoutSlug = props => {
-  const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
+  const { post, prev, next, siteInfo, lock, validPassword } = props
+  // 🔥 [핵심 수정] 컨텍스트(Context)를 통해 부모로부터 rawAllNavPages 원본 데이터를 가져옵니다.
+  const { rawAllNavPages } = useGitBookGlobal()
   const router = useRouter()
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
   const basePath = router.asPath.split('?')[0]
@@ -319,22 +322,22 @@ const LayoutSlug = props => {
   useEffect(() => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
-    if (post) {
-      // 🔥 [핵심 수정] 하이픈 유무와 관계없이 완벽히 매칭하기 위해 ID 변환 공통 함수 정의
+    if (post && rawAllNavPages) {
+      // 하이픈 유무와 관계없이 완벽히 매칭하기 위해 ID 변환 공통 함수 정의
       const cleanId = id => id ? id.replace(/-/g, '') : ''
-      const currentPostId = cleanId(post.id)
+      const currentItemId = cleanId(post.id)
 
-      // 1. 현재 주소창에 들어온 페이지가 메인 블로그 글 목록(allNavPages)에 존재하는 글인지 판별
-      const mainDatabasePost = allNavPages?.find(p => cleanId(p.id) === currentPostId)
+      // 타입(Page, Menu, SubMenu 등)과 무관하게 노션 메인 DB 목록에 등록되어 있는 행인지 판별합니다.
+      const mainDatabaseItem = rawAllNavPages?.find(p => cleanId(p.id) === currentItemId)
 
       let isAllowed = false
 
-      if (mainDatabasePost) {
-        // [경우 A] 메인 데이터베이스에 단독으로 등록된 일반 포스트라면 -> 반드시 'scu' 태그가 있어야 진입 허용
-        isAllowed = mainDatabasePost.tags?.includes('scu') || 
-                    mainDatabasePost.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+      if (mainDatabaseItem) {
+        // [경우 A] 메인 데이터베이스에 등록된 루트 아이템들(Page, Menu 등 전체) -> 반드시 'scu' 태그가 있어야만 진입 허용
+        isAllowed = mainDatabaseItem.tags?.includes('scu') || 
+                    mainDatabaseItem.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
       } else {
-        // [경우 B] 메인 목록에 아예 없는 글이라면 -> '테스트 문서' 내부에 빌트인된 하위 페이지/리스트/갤러리 블록이므로 허용
+        // [경우 B] 메인 목록에 아예 없는 글 -> '테스트 문서' 내부에 조각으로 박혀있는 리스트/갤러리 조각들이므로 무조건 패스
         isAllowed = true
       }
                         
@@ -361,7 +364,7 @@ const LayoutSlug = props => {
         }
       }, waiting404)
     }
-  }, [post, allNavPages])
+  }, [post, rawAllNavPages]) // 🔥 의존성 배열 업데이트
   
   return (
     <>

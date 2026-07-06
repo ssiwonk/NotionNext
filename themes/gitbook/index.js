@@ -155,7 +155,7 @@ const LayoutBase = props => {
         filteredNavPages,
         setFilteredNavPages,
         allNavPages: filteredNavPages, 
-        rawAllNavPages: allNavPages, // 🔥 [핵심 수정] 필터링되지 않은 노션 DB 원본 전체 행 데이터를 컨텍스트에 주입
+        rawAllNavPages: allNavPages, // 부모가 가진 원본 데이터를 컨텍스트로 제공
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -306,9 +306,12 @@ const LayoutPostList = props => {
  * 글 상세 페이지 (Slug) - 권한 검사 핵심 로직 포함
  */
 const LayoutSlug = props => {
-  const { post, prev, next, siteInfo, lock, validPassword } = props
-  // 🔥 [핵심 수정] 컨텍스트(Context)를 통해 부모로부터 rawAllNavPages 원본 데이터를 가져옵니다.
-  const { rawAllNavPages } = useGitBookGlobal()
+  const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
+  
+  // 🔥 [2중 안전장치] props로 들어온 데이터 혹은 전역 컨텍스트 데이터를 결합하여 원본 리스트 확보
+  const globalContext = useGitBookGlobal()
+  const rawAllNavPages = allNavPages || globalContext?.rawAllNavPages
+
   const router = useRouter()
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
   const basePath = router.asPath.split('?')[0]
@@ -323,26 +326,29 @@ const LayoutSlug = props => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
     if (post && rawAllNavPages) {
-      // 하이픈 유무와 관계없이 완벽히 매칭하기 위해 ID 변환 공통 함수 정의
-      const cleanId = id => id ? id.replace(/-/g, '') : ''
-      const currentItemId = cleanId(post.id)
+      // 🔥 [핵심 변경] ID 대신 가장 확실한 주소 매칭 기준인 'slug' 값으로 대조합니다.
+      const currentSlug = post.slug?.trim()
 
-      // 타입(Page, Menu, SubMenu 등)과 무관하게 노션 메인 DB 목록에 등록되어 있는 행인지 판별합니다.
-      const mainDatabaseItem = rawAllNavPages?.find(p => cleanId(p.id) === currentItemId)
+      // 타입(Page, Menu, SubMenu 등)에 상관없이 현재 슬러그 이름과 일치하는 노션 메인 DB 행들을 전부 찾습니다.
+      const mainDatabaseItems = rawAllNavPages?.filter(p => p.slug?.trim() === currentSlug)
 
       let isAllowed = false
 
-      if (mainDatabaseItem) {
-        // [경우 A] 메인 데이터베이스에 등록된 루트 아이템들(Page, Menu 등 전체) -> 반드시 'scu' 태그가 있어야만 진입 허용
-        isAllowed = mainDatabaseItem.tags?.includes('scu') || 
-                    mainDatabaseItem.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+      if (mainDatabaseItems && mainDatabaseItems.length > 0) {
+        // [경우 A] 메인 데이터베이스 목록에 명시되어 있는 루트 항목들 (자주 묻는 질문, 콘텐츠 아카이브 등 전체)
+        // -> 검색된 중복 항목들 중 단 하나라도 'scu' 태그를 가지고 있어야 통과시킵니다.
+        isAllowed = mainDatabaseItems.some(item => 
+          item.tags?.includes('scu') || 
+          item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+        )
       } else {
-        // [경우 B] 메인 목록에 아예 없는 글 -> '테스트 문서' 내부에 조각으로 박혀있는 리스트/갤러리 조각들이므로 무조건 패스
+        // [경우 B] 메인 목록에 아예 없는 슬러그 페이지 
+        // -> '테스트 문서' 내부에 빌트인 형태로 조각나서 들어간 인라인 하위 리스트/갤러리 블록들이므로 무조건 패스
         isAllowed = true
       }
                         
       // 안전장치: 무한 안내 페이지인 'scu404' 자체는 리다이렉트 예외 처리
-      const isScu404Page = post.slug === 'scu404' || router.asPath.includes('scu404')
+      const isScu404Page = currentSlug === 'scu404' || router.asPath.includes('scu404')
 
       if (currentHost.includes('scucontentspost') && !isAllowed && !isScu404Page) {
         router.push('/scu404')
@@ -364,7 +370,7 @@ const LayoutSlug = props => {
         }
       }, waiting404)
     }
-  }, [post, rawAllNavPages]) // 🔥 의존성 배열 업데이트
+  }, [post, rawAllNavPages])
   
   return (
     <>

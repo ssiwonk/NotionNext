@@ -104,7 +104,7 @@ const LayoutBase = props => {
     // 1. 기본 마킹 데이터 확보
     let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
     
-    // 2. 도메인별 필터링 (사이드바 메뉴 및 글 목록에 보여줄 대상)
+    // 2. 도메인별 필터링
     pages = pages?.filter(item => {
       if (currentHost.includes('scucontentspost')) {
         const hasScuTag = item.tags?.includes('scu') || 
@@ -119,18 +119,19 @@ const LayoutBase = props => {
       const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
       const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
 
-      // 메뉴 아이템 정렬
+      // 🔥 [핵심 수정] 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 '오름차순' 정렬합니다.
+      // 안되더라... 이렇게 하면 시간 순서대로 [대메뉴(과거) -> 하위메뉴(이후 생성)] 배치가 보장되어 기차칸 매칭이 깨지지 않습니다.
       menuItems.sort((a, b) => {
         const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0
         const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0
-        return timeB - timeA
+        return timeB - timeA // 내림차순이 변경안되더라
       })
 
-      // 일반 포스트 정렬
+      // 4. 일반 포스트들도 원하는 대로 date 기준 오름차순 정렬
       postItems.sort((a, b) => {
         const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
         const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-        return timeB - timeA
+        return timeB - timeA // 내림차순이 맞다
       })
 
       // 5. 정렬 완료된 메뉴와 포스트 결합
@@ -155,7 +156,6 @@ const LayoutBase = props => {
         filteredNavPages,
         setFilteredNavPages,
         allNavPages: filteredNavPages, 
-        rawAllNavPages: allNavPages,
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -166,6 +166,7 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
+        {/* 상단 헤더에 오름차순 정렬된 메뉴 데이터 주입 및 원본 오버라이드 */}
         <Header 
           {...props} 
           allNavPages={filteredNavPages}
@@ -175,12 +176,14 @@ const LayoutBase = props => {
         <main
           id='wrapper'
           className={`${siteConfig('LAYOUT_SIDEBAR_REVERSE') ? 'flex-row-reverse' : ''} relative flex justify-between w-full gap-x-6 h-full mx-auto max-w-screen-4xl`}>
+          {/* 왼쪽 사이드바 메뉴판 */}
           {fullWidth ? null : (
             <div className={'hidden md:block relative z-10 '}>
               <div className='w-80 pt-14 pb-4 sticky top-0 h-screen flex justify-between flex-col'>
                 <div className='overflow-y-scroll scroll-hidden pt-10 pl-5'>
                   {slotLeft}
 
+                  {/* 글 목록 컴포넌트에도 정렬된 데이터 강제 피딩 */}
                   <NavPostList 
                     {...props} 
                     allNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} 
@@ -192,6 +195,7 @@ const LayoutBase = props => {
             </div>
           )}
 
+          {/* 중앙 콘텐츠 영역 */}
           <div
             id='center-wrapper'
             className='flex flex-col justify-between w-full relative z-10 pt-14 min-h-screen'>
@@ -212,6 +216,7 @@ const LayoutBase = props => {
             </div>
           </div>
 
+          {/* 우측 사이드바 */}
           {fullWidth ? null : (
             <div
               className={
@@ -248,6 +253,7 @@ const LayoutBase = props => {
 
         <JumpToTopButton />
 
+        {/* 모바일 메뉴 드로어 */}
         <PageNavDrawer 
           {...props} 
           filteredNavPages={filteredNavPages} 
@@ -303,10 +309,10 @@ const LayoutPostList = props => {
 }
 
 /**
- * 글 상세 페이지 (Slug) - 권한 검사 핵심 로직 포함
+ * 글 상세 페이지 (Slug)
  */
 const LayoutSlug = props => {
-  // 🔥 [핵심 수정] 부모 props로부터 원본 데이터 목록(allNavPages)을 확실하게 구조분해 할당합니다.
+  // props에서 allNavPages를 함께 구조 분해 할당합니다.
   const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
   const router = useRouter()
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
@@ -321,41 +327,31 @@ const LayoutSlug = props => {
   useEffect(() => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
-    // 🔥 확실하게 props의 원본 목록 데이터를 타깃으로 지정
-    const targetPages = allNavPages || props.allNavPages
+    if (post) {
+      // 1. [조건 체크] 해당 노트가 메인 노션 DB에 등록된 아이템인지 확인
+      // DB에 행으로 등록된 메인 페이지는 Post, Page, Menu 등의 type을 가집니다.
+      // 더 확실히 하기 위해 전체 네비게이션 페이지 목록(allNavPages)에 포함되어 있는지도 체크합니다.
+      const isDbItem = (post.type && ['Post', 'Page', 'Menu', 'SubMenu'].includes(post.type)) ||
+                       allNavPages?.some(navPage => navPage.id === post.id || navPage.short_id === post.short_id)
+                       
+      // 🔥 [안전장치] 현재 보고 있는 페이지가 무한 안내 페이지('scu404')라면 리다이렉션을 건너뜁니다.
+      const isScu404Page = post.slug === 'scu404' || router.asPath.includes('scu404')
 
-    if (post && targetPages && currentHost.includes('scucontentspost')) {
-      // 🔥 [3중 슬러그 크로스 체크] 공백 및 대소문자 이슈 완벽 방지
-      const postSlug = post.slug?.toLowerCase()?.trim()
-      const routerSlug = (router.query.slug || '').toLowerCase()?.trim()
-      const pathSlug = router.asPath.split('?')[0].split('/').pop()?.toLowerCase()?.trim()
-
-      // 셋 중 하나라도 노션 메인 DB 목록의 slug 컬럼과 일치하는 행(Page, Menu 등 전체)을 찾습니다.
-      const mainDatabaseItems = targetPages.filter(p => {
-        const dbSlug = p.slug?.toLowerCase()?.trim()
-        return dbSlug && (dbSlug === postSlug || dbSlug === routerSlug || dbSlug === pathSlug)
-      })
-
-      let isAllowed = false
-
-      if (mainDatabaseItems && mainDatabaseItems.length > 0) {
-        // [경우 A] 메인 데이터베이스 목록에 명시되어 있는 루트 항목들인 경우
-        // 하나라도 'scu' 태그를 가지고 있어야 통과시킵니다.
-        isAllowed = mainDatabaseItems.some(item => 
-          item.tags?.includes('scu') || 
-          item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
-        )
-      } else {
-        // [경우 B] 메인 목록에 아예 없는 슬러그 페이지 (내부 빌트인 하위 요소들)는 통과
-        isAllowed = true
-      }
-                        
-      // 안전장치: 무한 안내 페이지인 'scu404' 자체는 리다이렉트 예외 처리
-      const isScu404Page = postSlug === 'scu404' || routerSlug === 'scu404' || pathSlug === 'scu404'
-
-      if (!isAllowed && !isScu404Page) {
-        router.push('/scu404')
-        return
+      if (currentHost.includes('scucontentspost') && !isScu404Page) {
+        if (isDbItem) {
+          // 2. DB에 등록된 메인 노트인 경우 -> 기존대로 'scu' 태그가 있는지 검사
+          const hasScuTag = post.tags?.includes('scu') || 
+                            post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+                            
+          if (!hasScuTag) {
+            // 태그에 scu가 없으면 비공개 안내 페이지('scu404')로 이동시킵니다.
+            router.push('/scu404')
+            return
+          }
+        } else {
+          // 3. DB에 등록되지 않은 노트(문서 내부 하위 페이지, 리스트/갤러리 아이템 등)라면 검사를 패스하고 모두 공개
+          console.log('DB 미등록 하위 콘텐츠이므로 접근을 허용합니다:', post.title)
+        }
       }
     }
 
@@ -373,7 +369,7 @@ const LayoutSlug = props => {
         }
       }, waiting404)
     }
-  }, [post, allNavPages, router.query.slug, router.asPath]) // 🔥 라우터 주소 변경 시 즉시 재검사하도록 디펜던시 보완
+  }, [post, router.asPath, allNavPages]) // 의존성 배열에 의존 변수들을 추가하여 정확히 작동하도록 합니다.
   
   return (
     <>
@@ -384,7 +380,7 @@ const LayoutSlug = props => {
       {lock && <ArticleLock validPassword={validPassword} />}
 
       {!lock && (
-        <div id='container'>
+        <div id='container' className='w-full'>
           <h1 className='text-3xl pt-12  dark:text-gray-300'>
             {siteConfig('POST_TITLE_ICON') && (
               <NotionIcon icon={post?.pageIcon} />

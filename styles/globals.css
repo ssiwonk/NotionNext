@@ -350,7 +350,7 @@ ol li,
 main.notion .notion-callout-text,
 main.notion .notion-callout-text * {
     line-height: 1.7 !important;    /* 글자 겹침 현상을 완벽히 막고, 본문과 가장 잘 어울리는 단정한 줄간격 */
-    font-size: 1.1rem !important;  /* 주변 일반 본문 글자들과 이질감 없이 딱 맞아떨어지는 크기 */
+    font-size: 1.05rem !important;  /* 주변 일반 본문 글자들과 이질감 없이 딱 맞아떨어지는 크기 */
 }
 
 /* [페이지 링크] 본문 내 다른 노션 페이지 연결 위젯 크기 조절 */
@@ -365,7 +365,7 @@ a[class*="page-link"],
 .notion-quote, 
 blockquote, 
 .notion-quote-text {
-  font-size: 1.1rem !important; 
+  font-size: 1.05rem !important; 
   line-height: 1.7 !important; 
 }
 
@@ -505,7 +505,7 @@ main.notion .notion-simple-table-cell,
 main.notion table th,
 main.notion table td,
 main.notion table td * {
-    font-size: 1.1rem !important;
+    font-size: 1.05rem !important;
 }
 
 /* 말줄임표 */
@@ -522,4 +522,3 @@ main.notion table td * {
     display: block !important;
   }
 }
-

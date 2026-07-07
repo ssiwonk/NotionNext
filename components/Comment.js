@@ -130,9 +130,9 @@ const Comment = ({ frontMatter, className }) => {
             </div>
           )}
 
-          {/* 🔥 [수정] name='댓글 입력'을 추가하여 상단 탭 타이틀을 변경했습니다. */}
+          {/* 🔥 [수정] key 값을 'Giscus'에서 '댓글 입력'으로 직접 변경하여 상단 타이틀을 수정했습니다. */}
           {COMMENT_GISCUS_REPO && (
-            <div key='Giscus' name='댓글 입력'>
+            <div key='댓글 입력'>
               <GiscusComponent className='px-2' />
             </div>
           )}

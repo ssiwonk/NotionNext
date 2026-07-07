@@ -8,8 +8,8 @@ import { useEffect, useRef, useState } from 'react'
 import Artalk from './Artalk'
 
 /**
- * 评论组件
- * 只有当前组件在浏览器可见范围内才会加载内容
+ * 댓글 컴포넌트
+ * 현재 컴포넌트가 브라우저 화면(뷰포트)에 보일 때만 실제 콘텐츠를 로드합니다. (성능 최적화)
  * @param {*} param0
  * @returns
  */
@@ -29,7 +29,7 @@ const Comment = ({ frontMatter, className }) => {
   const COMMENT_WEBMENTION_ENABLE = siteConfig('COMMENT_WEBMENTION_ENABLE')
 
   useEffect(() => {
-    // Check if the component is visible in the viewport
+    // 컴포넌트가 화면에 노출되는지 감지하는 뷰포트 옵저버 설정
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -80,11 +80,12 @@ const Comment = ({ frontMatter, className }) => {
     return null
   }
 
+  // 검색엔진 봇(크롤러)이 접근했을 때는 댓글 컴포넌트를 렌더링하지 않음
   if (isSearchEngineBot) {
     return null
   }
 
-  // 特定文章关闭评论区
+  // 특정 포스트(노션 문서 설정)에서 댓글창 숨기기 처리
   if (frontMatter?.comment === 'Hide') {
     return null
   }
@@ -95,10 +96,10 @@ const Comment = ({ frontMatter, className }) => {
       id='comment'
       ref={commentRef}
       className={`comment mt-5 text-gray-800 dark:text-gray-300 ${className || ''}`}>
-      {/* 延迟加载评论区 */}
+      {/* 댓글 영역 지연 로딩 표시 */}
       {!shouldLoad && (
         <div className='text-center'>
-          Loading...
+          로딩 중...
           <i className='fas fa-spinner animate-spin text-3xl ' />
         </div>
       )}
@@ -129,8 +130,9 @@ const Comment = ({ frontMatter, className }) => {
             </div>
           )}
 
+          {/* 🔥 [수정] name='댓글 입력'을 추가하여 상단 탭 타이틀을 변경했습니다. */}
           {COMMENT_GISCUS_REPO && (
-            <div key='Giscus'>
+            <div key='Giscus' name='댓글 입력'>
               <GiscusComponent className='px-2' />
             </div>
           )}

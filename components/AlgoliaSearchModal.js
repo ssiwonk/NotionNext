@@ -31,8 +31,6 @@ const ShortCutActions = [
 
 /**
  * Algolia 연동 팝업 검색창 컴포넌트
- * 열기 방식: cRef.current.openSearch()
- * https://www.algolia.com/doc/api-reference/search-api-parameters/
  */
 export default function AlgoliaSearchModal({ cRef }) {
   const [searchResults, setSearchResults] = useState([])
@@ -50,7 +48,7 @@ export default function AlgoliaSearchModal({ cRef }) {
   const router = useRouter()
 
   /**
-   * 단축키 설정
+   * 단축키 설정 (Ctrl + K)
    */
   useHotkeys('ctrl+k', e => {
     e.preventDefault()
@@ -62,7 +60,6 @@ export default function AlgoliaSearchModal({ cRef }) {
     'down',
     e => {
       if (isInputFocused) {
-        // 인풋창 포커스 시에만 트리거
         e.preventDefault()
         if (activeIndex < searchResults.length - 1) {
           setActiveIndex(activeIndex + 1)
@@ -102,6 +99,7 @@ export default function AlgoliaSearchModal({ cRef }) {
     },
     { enableOnFormTags: true }
   )
+
   // 검색 결과 페이지로 이동
   const onJumpSearchResult = () => {
     if (searchResults.length > 0) {
@@ -110,6 +108,7 @@ export default function AlgoliaSearchModal({ cRef }) {
     }
   }
 
+  // 검색 상태 초기화
   const resetSearch = () => {
     setActiveIndex(0)
     setKeyword('')
@@ -159,7 +158,6 @@ export default function AlgoliaSearchModal({ cRef }) {
 
   /**
    * 인덱스 검색 핸들러
-   * @param {*} query
    */
   const handleSearch = async (query, page) => {
     setKeyword(query)
@@ -200,14 +198,13 @@ export default function AlgoliaSearchModal({ cRef }) {
     }
   }
 
-  // 디바운싱/스로틀 처리로 연속 입력 시 과부하 방지
+  // 연속 입력 시 과부하 방지 (스로틀)
   const throttledHandleInputChange = useRef(
     throttle((query, page = 0) => {
       handleSearch(query, page)
     }, 1000)
   )
 
-  // 디바운스 타이머 참조 캐시
   const searchTimer = useRef(null)
 
   // Input 변경 핸들러
@@ -224,17 +221,12 @@ export default function AlgoliaSearchModal({ cRef }) {
     }, 800)
   }
 
-  /**
-   * 페이지네이션 페이지 전환
-   * @param {*} page
-   */
+  // 페이지네이션 페이지 전환
   const switchPage = page => {
     throttledHandleInputChange.current(keyword, page)
   }
 
-  /**
-   * 모달 닫기
-   */
+  // 모달 닫기
   const closeModal = () => {
     setIsModalOpen(false)
   }
@@ -253,7 +245,7 @@ export default function AlgoliaSearchModal({ cRef }) {
       <div
         className={`${
           isModalOpen ? 'opacity-100' : 'invisible opacity-0 translate-y-10'
-        } max-h-[80vh] flex flex-col justify-between w-full min-h-[10rem] h-full md:h-fit max-w-xl dark:bg-hexo-black-gray dark:border-gray-800 bg-white dark:bg- p-5 rounded-lg z-50 shadow border hover:border-blue-600 duration-300 transition-all `}>
+        } max-h-[80vh] flex flex-col justify-between w-full min-h-[10rem] h-full md:h-fit max-w-xl dark:bg-hexo-black-gray dark:border-gray-800 bg-white p-5 rounded-lg z-50 shadow border hover:border-blue-600 duration-300 transition-all `}>
         <div className='flex justify-between items-center'>
           <div className='text-2xl text-blue-600 dark:text-yellow-600 font-bold'>
             검색
@@ -275,16 +267,13 @@ export default function AlgoliaSearchModal({ cRef }) {
           ref={inputRef}
         />
 
-        {/* 태그 추천 그룹 */}
-        <div className='mb-4'>
-          <TagGroups />
-        </div>
+        {/* 🔥 [수정] 검색창 바로 아래에 'scu 4' 등의 추천 태그 그룹이 노출되던 영역을 완전히 지웠습니다. */}
 
         {searchResults.length === 0 && keyword && !isLoading && (
           <div>
             <p className=' text-slate-600 text-center my-4 text-base'>
               {' '}
-              관련 결과를 찾을 수 없습니다: 
+              관련 결과를 찾을 수 없습니다: @
               <span className='font-semibold'>&quot;{keyword}&quot;</span>
             </p>
           </div>
@@ -353,42 +342,7 @@ export default function AlgoliaSearchModal({ cRef }) {
 }
 
 /**
- * 추천 태그 컴포넌트
- */
-function TagGroups() {
-  const { tagOptions } = useGlobal()
-  const firstTenTags = tagOptions?.slice(0, 10)
-
-  return (
-    <div id='tags-group' className='dark:border-gray-700 space-y-2'>
-      {firstTenTags?.map((tag, index) => {
-        return (
-          <SmartLink
-            passHref
-            key={index}
-            href={`/tag/${encodeURIComponent(tag.name)}`}
-            className={'cursor-pointer inline-block whitespace-nowrap'}>
-            <div
-              className={
-                'flex items-center text-black dark:text-gray-300 hover:bg-blue-600 dark:hover:bg-yellow-600 hover:scale-110 hover:text-white rounded-lg px-2 py-0.5 duration-150 transition-all'
-              }>
-              <div className='text-lg'>{tag.name} </div>
-              {tag.count ? (
-                <sup className='relative ml-1'>{tag.count}</sup>
-              ) : (
-                <></>
-              )}
-            </div>
-          </SmartLink>
-        )
-      })}
-    </div>
-  )
-}
-
-/**
  * 하단 내부 하위 페이지네이션
- * @param {*} param0
  */
 function Pagination(props) {
   const { totalPage, page, switchPage } = props

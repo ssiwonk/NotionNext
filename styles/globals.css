@@ -1,7 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
+/* 1. 프리텐다드 가변 폰트(Variable) 불러오기 (모바일 볼드 미표시 버그 완벽 해결) */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css');
+
 @font-face {
     font-family: 'NanumBarunPen';
     src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunpen.woff') format('woff');
@@ -316,19 +319,27 @@ canvas#live2d,
   pointer-events: none !important;
 }
 
-/* [폰트] 사이트 전체 나눔고딕 강제 지정 */
+/* [폰트] 사이트 전체 나눔고딕 강제 지정 (가변 폰트 적용) */
 body, h1, h2, h3, h4, h5, h6, input, textarea, select { 
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", sans-serif !important;
+  font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", sans-serif !important;
 }
 
-/* [본문] 기본 텍스트 크기 및 행간 마진 */
+/* [본문] 기본 텍스트 크기 및 행간 마진 수정 (모바일 문단 간격 대폭 개선) */
 .notion-text, 
 p, 
 .gitbook-content p { 
   font-size: 1.1rem !important; 
-  line-height: 1.7 !important; 
-  margin-top: 0.5rem !important; 
-  margin-bottom: 0.1rem !important;
+  line-height: 1.8 !important; 
+  margin-top: 0.8rem !important;    /* 위쪽 간격을 조금 더 여유 있게 조정 */
+  margin-bottom: 0.8rem !important; /* 아래쪽 간격을 0.8rem으로 늘려 문단 구분 확보 */
+}
+
+/* [모바일/PC 공통 볼드 및 두꺼운 글씨 강제 지원] */
+strong, 
+b, 
+.notion-b, 
+.notion-strong {
+  font-weight: 700 !important; /* 모바일 브라우저에서도 확실하게 두껍게 나오도록 강제 */
 }
 
 /* [목록] 글머리 기호 리스트 줄간격 및 리스트간 간격 초밀착 조정 */
@@ -342,23 +353,65 @@ ol li,
   padding-bottom: 0px !important;
   
   /* 2. 리스트 '하나' 내부에서 글자가 두 줄이 될 때의 줄간격 */
-  line-height: 1.7 !important;  
+  line-height: 1.8 !important;  
+  font-size: 1.1rem !important;
+}
+
+/* [체크리스트 / To-Do] 체크리스트 블록의 글자 크기를 일반 목록과 동일하게 조정 */
+.notion-to-do,
+.notion-to-do-item,
+.notion-to-do-body,
+[class*="notion-to-do"] {
   font-size: 1.1rem !important;
 }
 
 /* [콜아웃] 본문 메인 영역의 콜아웃만 줄간격 및 글자크기 최적화 (사이드바 제외) */
 main.notion .notion-callout-text,
 main.notion .notion-callout-text * {
-    line-height: 1.7 !important;    /* 글자 겹침 현상을 완벽히 막고, 본문과 가장 잘 어울리는 단정한 줄간격 */
+    line-height: 1.8 !important;    /* 글자 겹침 현상을 완벽히 막고, 본문과 가장 잘 어울리는 단정한 줄간격 */
     font-size: 1.05rem !important;  /* 주변 일반 본문 글자들과 이질감 없이 딱 맞아떨어지는 크기 */
 }
 
-/* [페이지 링크] 본문 내 다른 노션 페이지 연결 위젯 크기 조절 */
+/* [페이지 링크] 본문 내 다른 노션 페이지 연결 위젯 크기 및 자식 요소 통일 */
 .notion-page-link, 
 a[class*="page-link"], 
-.notion-page-shortcut {
+.notion-page-shortcut,
+.notion-mention,
+[class*="notion-link"] {
   font-size: 1.1rem !important; 
-  font-weight: 500 !important; 
+  font-weight: 500 !important;
+  display: inline-flex !important; /* 블록 요소처럼 거대하게 변하는 것 방지 */
+  align-items: center !important;
+  vertical-align: middle !important;
+  padding: 0 4px !important;       /* 가로/세로 여백을 최소화하여 한 단어처럼 흐르도록 수정 */
+  margin: 0 !important;
+  background: transparent !important; /* 링크 박스 배경 제거하여 자연스럽게 연결 */
+}
+
+/* 페이지 링크 내부의 글자 크기도 목록과 완벽히 일치하도록 강제 */
+.notion-page-link *, 
+a[class*="page-link"] *, 
+.notion-page-shortcut *,
+.notion-mention * {
+  font-size: 1.1rem !important;
+  line-height: inherit !important;
+}
+
+/* 페이지 링크 내부 아이콘(svg/img) 크기도 글자 크기(1.1em)에 맞춰 대폭 축소 */
+.notion-page-link .notion-page-icon,
+.notion-page-shortcut .notion-page-icon,
+.notion-mention .notion-page-icon,
+.notion-page-link svg,
+.notion-page-shortcut svg,
+.notion-page-link img,
+.notion-page-shortcut img {
+  width: 1.1em !important;
+  height: 1.1em !important;
+  min-width: 1.1em !important;
+  min-height: 1.1em !important;
+  margin-right: 0.3em !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
 }
 
 /* [인용문구] 인용 블록 서식 정돈 */
@@ -366,7 +419,7 @@ a[class*="page-link"],
 blockquote, 
 .notion-quote-text {
   font-size: 1.05rem !important; 
-  line-height: 1.7 !important; 
+  line-height: 1.8 !important; 
 }
 
 /* [수학공식] 수식이 비정상적으로 거대해지던 중첩 버그 차단 */
@@ -479,12 +532,9 @@ div.fixed.bottom-12.right-6 {
     pointer-events: none !important;
 }
 
-/* 1. 프리텐다드 웹폰트 불러오기 (CDN) */
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
-
-/* 2. 노션넥스트 전체 텍스트 및 노션 블록에 폰트 강제 적용 */
+/* 1. 노션넥스트 전체 텍스트 및 노션 블록에 폰트 강제 적용 (가변 폰트명 반영) */
 body, .notion, .notion-page {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", sans-serif !important;
+    font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", sans-serif !important;
     letter-spacing: -0.03em; /* 자간을 살짝 좁혀주면 이미지처럼 훨씬 깔끔해집니다 */
 }
 

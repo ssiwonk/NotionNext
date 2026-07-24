@@ -621,10 +621,9 @@ main.notion table td * {
    상단 메뉴바 (Header Bar) & 서브메뉴 최종 커스텀
    ========================================== */
 
-/* 1. 헤더 전체 배경색 (딥 네이비) */
 #top-nav,
 #top-nav > div {
-  background: #F6F8FA !important; 
+  background: #A3C6DA !important; 
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -640,4 +639,24 @@ main.notion table td * {
 /* #logo-wrapper img 아이콘 색상을 선명한 파란색으로 변경 */
 #logo-wrapper img {
   filter: invert(41%) sepia(94%) saturate(2371%) hue-rotate(193deg) brightness(97%) contrast(98%) !important;
+}
+
+/* ==========================================
+   상단 메뉴바 다크모드(달 모양) 버튼 완전 제거
+   ========================================== */
+#top-nav [class*="DarkModeButton"],
+#top-nav [class*="dark-mode"],
+#top-nav [class*="DarkMode"],
+#top-nav [class*="theme-switch"],
+#top-nav [class*="ThemeSwitch"],
+#top-nav button[aria-label*="theme"],
+#top-nav button[aria-label*="mode"],
+#top-nav div.cursor-pointer:has(svg) {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
 }

@@ -623,7 +623,7 @@ main.notion table td * {
 
 #top-nav,
 #top-nav > div {
-  background: #A3C6DA !important; 
+  background: #CADEEA !important; 
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -633,12 +633,12 @@ main.notion table td * {
 
 /* 라이트 모드 텍스트 색상 */
 #logo-wrapper a {
-  color: darkblue !important; /* 👈 원하시는 색상 코드(HEX, RGB 등)를 넣으세요 */
+  color: #2B4EA2 !important; /* 👈 원하시는 색상 코드(HEX, RGB 등)를 넣으세요 */
 }
 
-/* #logo-wrapper img 아이콘 색상을 선명한 파란색으로 변경 */
 #logo-wrapper img {
-  filter: invert(41%) sepia(94%) saturate(2371%) hue-rotate(193deg) brightness(97%) contrast(98%) !important;
+  /* 첨부 이미지의 코발트 블루(#2E4BAC)를 구현하는 필터 */
+  filter: invert(100%) sepia(100%) hue-rotate(183deg) saturate(93.5%) contrast(100%);
 }
 
 /* ==========================================

@@ -416,53 +416,6 @@ const LayoutSlug = props => {
   // 렌더링에 사용할 최종 한글 연월일 문자열 추출
   const formattedDateString = post ? formatKoreanDate(post.publishDate || post.date) : ''
 
-  // 🔥 [좌측 사이드바 순서 동일 재현 로직]
-  const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
-  
-  // 1. 메뉴 제회 및 도메인 필터링 적용
-  const rawPosts = allNavPages?.filter(item => {
-    if (item.type === 'Menu' || item.type === 'SubMenu') return false
-    if (currentHost.includes('scucontentspost')) {
-      return item.tags?.includes('scu') || item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
-    }
-    return true
-  }) || []
-
-  // 2. 날짜 기준 내림차순 정렬
-  const sortedByDate = [...rawPosts].sort((a, b) => {
-    const timeA = (a.publishDate || a.date) ? new Date(a.publishDate || a.date).getTime() : 0
-    const timeB = (b.publishDate || b.date) ? new Date(b.publishDate || b.date).getTime() : 0
-    return timeB - timeA
-  })
-
-  // 3. 사이드바 방식과 동일하게 '카테고리별 그룹화' 진행
-  const categoryGroups = {}
-  const categoryOrder = []
-
-  sortedByDate.forEach(item => {
-    const cat = item.category || '기타'
-    if (!categoryGroups[cat]) {
-      categoryGroups[cat] = []
-      categoryOrder.push(cat)
-    }
-    categoryGroups[cat].push(item)
-  })
-
-  // 4. 사이드바에 보이는 위에서 아래로의 전체 순서 배열(Flat List) 생성
-  const sidebarOrderedList = categoryOrder.flatMap(cat => categoryGroups[cat])
-
-  // 5. 현재 글의 위치(Index) 찾기
-  const currentIndex = sidebarOrderedList.findIndex(
-    item => item.id === post?.id || item.short_id === post?.short_id
-  )
-
-  // 6. 사이드바 기준 위쪽 글(Prev), 아래쪽 글(Next) 매핑
-  const calcPrev = currentIndex > 0 ? sidebarOrderedList[currentIndex - 1] : null
-  const calcNext = (currentIndex !== -1 && currentIndex < sidebarOrderedList.length - 1) ? sidebarOrderedList[currentIndex + 1] : null
-
-  const finalPrev = currentIndex !== -1 ? calcPrev : prev
-  const finalNext = currentIndex !== -1 ? calcNext : next
-
   return (
     <>
       <Head>
@@ -473,6 +426,7 @@ const LayoutSlug = props => {
 
       {!lock && (
         <div id='container' className='w-full'>
+          {/* 본문 제목 영역 */}
           <h1 className='text-3xl pt-12 font-bold dark:text-gray-300'>
             {siteConfig('POST_TITLE_ICON') && (
               <NotionIcon icon={post?.pageIcon} />
@@ -480,6 +434,7 @@ const LayoutSlug = props => {
             {post?.title}
           </h1>
 
+          {/* 🔥 [수정] 정상적인 날짜 문자열이 최종 검증 통과했을 때만 화면에 랜더링 */}
           {formattedDateString && (
             <div className='text-sm text-gray-400 dark:text-gray-500 mt-3 pb-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-1.5'>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -509,9 +464,8 @@ const LayoutSlug = props => {
                 </div>
               </div>
 
-              {/* 🔥 사이드바 순서와 완벽히 일치하는 prev, next 연결 */}
               {post?.type === 'Post' && (
-                <ArticleAround prev={finalPrev} next={finalNext} />
+                <ArticleAround prev={prev} next={next} />
               )}
 
               <Comment frontMatter={post} />

@@ -624,8 +624,23 @@ main.notion table td * {
 /* 1. 헤더 전체 배경색 (딥 네이비) */
 #top-nav,
 #top-nav > div {
-  background: #c7d8ff !important; 
+  background: #F8F9FA !important; 
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ==========================================
+   상단 헤더 로고 / 사이트 이름 색상 변경
+   ========================================== */
+
+/* 라이트 모드 텍스트 색상 */
+#logo-wrapper a {
+  color: darkblue !important; /* 👈 원하시는 색상 코드(HEX, RGB 등)를 넣으세요 */
+}
+
+/* 아이콘(이미지) 색상 필터 적용 */
+/* 예시: 파란색 계열로 톤 변경 (필요에 따라 filter 값 조정) */
+#logo-wrapper img {
+  filter: invert(7%) sepia(48%) saturate(4646%) hue-rotate(206deg) brightness(93%) contrast(94%);
 }
 
 /* ==========================================
@@ -638,35 +653,4 @@ main.notion table td * {
 #top-nav button:has(svg),
 #top-nav div.cursor-pointer:has(svg) {
   display: none !important;
-}
-
-/* ==========================================
-   상단 헤더 로고 / 사이트 이름 색상 변경
-   ========================================== */
-
-/* 라이트 모드 텍스트 색상 */
-#logo-wrapper a {
-  color: #3182ce !important; /* 👈 원하시는 색상 코드(HEX, RGB 등)를 넣으세요 */
-}
-
-/* 마우스를 올렸을 때(Hover) 색상 (선택 사항) */
-#logo-wrapper a:hover {
-  color: #2b6cb0 !important;
-}
-
-/* 아이콘(이미지) 색상 필터 적용 */
-#logo-wrapper img {
-  /* 예시: 파란색 계열로 톤 변경 (필요에 따라 filter 값 조정) */
-  filter: invert(38%) sepia(85%) saturate(1832%) hue-rotate(190deg) brightness(95%) contrast(90%);
-}
-
-/* ==========================================
-   2. 마우스 우클릭 커스텀 팝업 메뉴 숨기기
-   ========================================== */
-#right-click-menu,
-div[id*="right-click"],
-.right-click-menu {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
 }

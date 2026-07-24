@@ -617,60 +617,80 @@ main.notion table td * {
   }
 }
 
-/* 메뉴바 부분 변경 */
-
-/* 아이콘(이미지) 색상 필터 적용 */
-#logo-wrapper img {
-  /* 예시: 파란색 계열로 톤 변경 (필요에 따라 filter 값 조정) */
-  filter: invert(38%) sepia(85%) saturate(1832%) hue-rotate(190deg) brightness(95%) contrast(90%);
-}
-
 /* ==========================================
-   상단 메뉴바 (Header Bar) 고급 딥 블루 커스텀
+   상단 메뉴바 (Header Bar) & 서브메뉴 최종 커스텀
    ========================================== */
 
-/* 1. 메뉴바 전체 배경색 설정 */
+/* 1. 헤더 전체 배경색 (딥 네이비) */
 #top-nav,
 #top-nav > div {
-  /* [추천 1] 모던하고 깊이감 있는 딥 네이비 단색 */
   background: #0f172a !important; 
-  
-  /* [추천 2] 은은하고 고급스러운 그라데이션을 원하시면 아래 주석(//)을 해제하고 위 background를 지워주세요 */
-  /* background: linear-gradient(135deg, #0b132b 0%, #1c2541 100%) !important; */
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; /* 하단 경계선을 투명한 흰색 선으로 정돈 */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* 2. 로고 및 메뉴 글자 색상 (흰색으로 변경) */
+/* 2. 메인 메뉴 글자 기본 색상 (밝은 은회색) */
 #top-nav a,
 #top-nav button,
 #top-nav span,
 #logo-wrapper a {
-  color: #f8fafc !important;
+  color: #e2e8f0 !important;
 }
 
-/* 3. 메뉴 마우스 호버(Hover) 시 색상 */
+/* 3. [해결] 마우스 호버 및 선택된 메뉴 색상 (밝고 눈에 잘 띄는 스카이 블루) */
 #top-nav a:hover,
-#top-nav button:hover {
-  color: #93c5fd !important; /* 마우스를 올리면 은은한 파스텔 블루로 변경 */
+#top-nav button:hover,
+#top-nav a.active,
+#top-nav [class*="active"] {
+  color: #38bdf8 !important; /* 기존의 어두운 파란색 대신 명도가 높은 선명한 하늘색 적용 */
 }
 
-/* 4. 우측 검색창(Search) 디자인 반전 (어두운 배경용) */
+/* 4. [해결] 서브메뉴(드롭다운) 박스 배경 다크 톤 변경 및 가독성 확보 */
+#top-nav .group:hover > div,
+#top-nav .group:hover > ul,
+#top-nav ul.absolute,
+#top-nav div.absolute,
+#top-nav [class*="drop-down"],
+#top-nav [class*="submenu"] {
+  background-color: #1e293b !important; /* 서브메뉴 박스 배경: 다크 슬레이트 블루 */
+  border: 1px solid rgba(255, 255, 255, 0.15) !important; /* 은은한 테두리 */
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important; /* 시각적 깊이감을 주는 그림자 */
+  border-radius: 0.5rem !important; /* 모서리 둥글게 */
+  padding: 0.5rem 0 !important;
+}
+
+/* 5. 서브메뉴 내부 링크 글자색 및 호버 배경 */
+#top-nav ul.absolute a,
+#top-nav div.absolute a,
+#top-nav [class*="drop-down"] a,
+#top-nav [class*="submenu"] a {
+  color: #f1f5f9 !important; /* 서브메뉴 글자 선명한 흰색 */
+  padding: 0.5rem 1rem !important;
+  display: block !important;
+}
+
+#top-nav ul.absolute a:hover,
+#top-nav div.absolute a:hover,
+#top-nav [class*="drop-down"] a:hover,
+#top-nav [class*="submenu"] a:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important; /* 마우스 올렸을 때 살짝 밝아지는 효과 */
+  color: #38bdf8 !important; /* 호버 시 스카이 블루 */
+}
+
+/* 6. 우측 검색창 디자인 (어두운 배경용) */
 #top-nav .search-wrapper,
 #top-nav div[class*="search"],
 #top-nav button[class*="search"] {
-  background-color: rgba(255, 255, 255, 0.12) !important; /* 반투명한 흰색 배경 */
+  background-color: rgba(255, 255, 255, 0.12) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: #e2e8f0 !important;
 }
 
-/* 검색창 내부 아이콘 및 Ctrl+K 단축키 텍스트 색상 */
 #top-nav div[class*="search"] *,
 #top-nav button[class*="search"] * {
   color: #cbd5e1 !important;
 }
 
-/* 5. 좌측 로고 아이콘(SVG/PNG) 반전 (어두운 배경에 보이도록 흰색 계열로 변환) */
+/* 7. 로고 아이콘 반전 (밝게) */
 #logo-wrapper img {
   filter: brightness(0) invert(1) !important;
 }

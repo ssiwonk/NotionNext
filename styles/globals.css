@@ -616,3 +616,61 @@ main.notion table td * {
     display: block !important;
   }
 }
+
+/* 메뉴바 부분 변경 */
+
+/* 아이콘(이미지) 색상 필터 적용 */
+#logo-wrapper img {
+  /* 예시: 파란색 계열로 톤 변경 (필요에 따라 filter 값 조정) */
+  filter: invert(38%) sepia(85%) saturate(1832%) hue-rotate(190deg) brightness(95%) contrast(90%);
+}
+
+/* ==========================================
+   상단 메뉴바 (Header Bar) 고급 딥 블루 커스텀
+   ========================================== */
+
+/* 1. 메뉴바 전체 배경색 설정 */
+#top-nav,
+#top-nav > div {
+  /* [추천 1] 모던하고 깊이감 있는 딥 네이비 단색 */
+  background: #0f172a !important; 
+  
+  /* [추천 2] 은은하고 고급스러운 그라데이션을 원하시면 아래 주석(//)을 해제하고 위 background를 지워주세요 */
+  /* background: linear-gradient(135deg, #0b132b 0%, #1c2541 100%) !important; */
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; /* 하단 경계선을 투명한 흰색 선으로 정돈 */
+}
+
+/* 2. 로고 및 메뉴 글자 색상 (흰색으로 변경) */
+#top-nav a,
+#top-nav button,
+#top-nav span,
+#logo-wrapper a {
+  color: #f8fafc !important;
+}
+
+/* 3. 메뉴 마우스 호버(Hover) 시 색상 */
+#top-nav a:hover,
+#top-nav button:hover {
+  color: #93c5fd !important; /* 마우스를 올리면 은은한 파스텔 블루로 변경 */
+}
+
+/* 4. 우측 검색창(Search) 디자인 반전 (어두운 배경용) */
+#top-nav .search-wrapper,
+#top-nav div[class*="search"],
+#top-nav button[class*="search"] {
+  background-color: rgba(255, 255, 255, 0.12) !important; /* 반투명한 흰색 배경 */
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #e2e8f0 !important;
+}
+
+/* 검색창 내부 아이콘 및 Ctrl+K 단축키 텍스트 색상 */
+#top-nav div[class*="search"] *,
+#top-nav button[class*="search"] * {
+  color: #cbd5e1 !important;
+}
+
+/* 5. 좌측 로고 아이콘(SVG/PNG) 반전 (어두운 배경에 보이도록 흰색 계열로 변환) */
+#logo-wrapper img {
+  filter: brightness(0) invert(1) !important;
+}

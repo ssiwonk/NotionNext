@@ -624,73 +624,35 @@ main.notion table td * {
 /* 1. 헤더 전체 배경색 (딥 네이비) */
 #top-nav,
 #top-nav > div {
-  background: #0f172a !important; 
+  background: #a0bdff !important; 
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* 2. 메인 메뉴 글자 기본 색상 (밝은 은회색) */
-#top-nav a,
-#top-nav button,
-#top-nav span,
-#logo-wrapper a {
-  color: #e2e8f0 !important;
-}
-
-/* 3. [해결] 마우스 호버 및 선택된 메뉴 색상 (밝고 눈에 잘 띄는 스카이 블루) */
-#top-nav a:hover,
-#top-nav button:hover,
-#top-nav a.active,
-#top-nav [class*="active"] {
-  color: #38bdf8 !important; /* 기존의 어두운 파란색 대신 명도가 높은 선명한 하늘색 적용 */
-}
-
-/* 4. [해결] 서브메뉴(드롭다운) 박스 배경 다크 톤 변경 및 가독성 확보 */
-#top-nav .group:hover > div,
-#top-nav .group:hover > ul,
-#top-nav ul.absolute,
-#top-nav div.absolute,
-#top-nav [class*="drop-down"],
-#top-nav [class*="submenu"] {
-  background-color: #1e293b !important; /* 서브메뉴 박스 배경: 다크 슬레이트 블루 */
-  border: 1px solid rgba(255, 255, 255, 0.15) !important; /* 은은한 테두리 */
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important; /* 시각적 깊이감을 주는 그림자 */
-  border-radius: 0.5rem !important; /* 모서리 둥글게 */
-  padding: 0.5rem 0 !important;
-}
-
-/* 5. 서브메뉴 내부 링크 글자색 및 호버 배경 */
-#top-nav ul.absolute a,
-#top-nav div.absolute a,
-#top-nav [class*="drop-down"] a,
-#top-nav [class*="submenu"] a {
-  color: #f1f5f9 !important; /* 서브메뉴 글자 선명한 흰색 */
-  padding: 0.5rem 1rem !important;
-  display: block !important;
-}
-
-#top-nav ul.absolute a:hover,
-#top-nav div.absolute a:hover,
-#top-nav [class*="drop-down"] a:hover,
-#top-nav [class*="submenu"] a:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important; /* 마우스 올렸을 때 살짝 밝아지는 효과 */
-  color: #38bdf8 !important; /* 호버 시 스카이 블루 */
-}
-
-/* 6. 우측 검색창 디자인 (어두운 배경용) */
-#top-nav .search-wrapper,
-#top-nav div[class*="search"],
-#top-nav button[class*="search"] {
-  background-color: rgba(255, 255, 255, 0.12) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: #e2e8f0 !important;
-}
-
-#top-nav div[class*="search"] *,
-#top-nav button[class*="search"] * {
-  color: #cbd5e1 !important;
-}
-
-/* 7. 로고 아이콘 반전 (밝게) */
+/* 아이콘(이미지) 색상 필터 적용 */
 #logo-wrapper img {
-  filter: brightness(0) invert(1) !important;
+  /* 예시: 파란색 계열로 톤 변경 (필요에 따라 filter 값 조정) */
+  filter: invert(38%) sepia(85%) saturate(1832%) hue-rotate(190deg) brightness(95%) contrast(90%);
+}
+
+/* ==========================================
+   1. 상단 메뉴바 다크모드(명암) 전환 아이콘 숨기기
+   ========================================== */
+#top-nav [class*="dark-mode"],
+#top-nav [class*="DarkMode"],
+#top-nav button[aria-label*="theme"],
+#top-nav button[aria-label*="mode"],
+#top-nav button:has(svg),
+#top-nav div.cursor-pointer:has(svg) {
+  display: none !important;
+}
+
+/* ==========================================
+   2. 마우스 우클릭 커스텀 팝업 메뉴 숨기기
+   ========================================== */
+#right-click-menu,
+div[id*="right-click"],
+.right-click-menu {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }

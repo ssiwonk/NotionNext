@@ -624,7 +624,7 @@ main.notion table td * {
 /* 1. 헤더 전체 배경색 (딥 네이비) */
 #top-nav,
 #top-nav > div {
-  background: #F8F9FA !important; 
+  background: #F6F8FA !important; 
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -641,16 +641,4 @@ main.notion table td * {
 /* 예시: 파란색 계열로 톤 변경 (필요에 따라 filter 값 조정) */
 #logo-wrapper img {
   filter: invert(7%) sepia(48%) saturate(4646%) hue-rotate(206deg) brightness(93%) contrast(94%);
-}
-
-/* ==========================================
-   1. 상단 메뉴바 다크모드(명암) 전환 아이콘 숨기기
-   ========================================== */
-#top-nav [class*="dark-mode"],
-#top-nav [class*="DarkMode"],
-#top-nav button[aria-label*="theme"],
-#top-nav button[aria-label*="mode"],
-#top-nav button:has(svg),
-#top-nav div.cursor-pointer:has(svg) {
-  display: none !important;
 }

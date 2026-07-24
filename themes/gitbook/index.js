@@ -49,30 +49,36 @@ const ThemeGlobalGitbook = createContext()
 export const useGitBookGlobal = () => useContext(ThemeGlobalGitbook)
 
 /**
- * 최신 글에 빨간 점 표시
+ * 오늘 날짜(YYYY-MM-DD)에 작성/발행된 글에만 빨간 점 표시
  */
 function getNavPagesWithLatest(allNavPages, latestPosts, post) {
-  const postReadTime = JSON.parse(
-    localStorage.getItem('post_read_time') || '{}'
-  )
-  if (post) {
-    postReadTime[getShortId(post.id)] = new Date().getTime()
-  }
-  localStorage.setItem('post_read_time', JSON.stringify(postReadTime))
+  // 오늘 날짜 기준점 (연, 월, 일)
+  const now = new Date()
+  const todayYear = now.getFullYear()
+  const todayMonth = now.getMonth()
+  const todayDate = now.getDate()
 
   return allNavPages?.map(item => {
-    const res = {
-      ...item,
-      publishDate: item.publishDate || item.date || null 
+    // 날짜 데이터 추출 (publishDate > date > createdTime 순으로 확인)
+    const rawDate = item.publishDate || item.date || item.createdTime
+    let isToday = false
+
+    if (rawDate) {
+      const itemDate = new Date(rawDate)
+      
+      // 날짜가 올바른 형식인지 확인 후 오늘 날짜와 일치하는지 비교
+      if (!isNaN(itemDate.getTime())) {
+        isToday =
+          itemDate.getFullYear() === todayYear &&
+          itemDate.getMonth() === todayMonth &&
+          itemDate.getDate() === todayDate
+      }
     }
-    if (
-      latestPosts && latestPosts.some(post => post?.id.indexOf(item?.short_id) === 14) &&
-      (!postReadTime[item.short_id] ||
-        postReadTime[item.short_id] < new Date(item.lastEditedDate).getTime())
-    ) {
-      return { ...res, isLatest: true }
-    } else {
-      return res
+
+    return {
+      ...item,
+      publishDate: item.publishDate || item.date || null,
+      isLatest: isToday // 오늘 작성된 글일 때만 true
     }
   })
 }
@@ -359,6 +365,10 @@ const formatKoreanDate = (dateVal) => {
  */
 const LayoutSlug = props => {
   const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
+  
+  // 🔥 [추가] useGitBookGlobal 전역 컨텍스트에서 필터링/정렬이 완료된 filteredNavPages를 가져옵니다.
+  const { filteredNavPages } = useGitBookGlobal() || {}
+
   const router = useRouter()
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
   const basePath = router.asPath.split('?')[0]
@@ -368,7 +378,7 @@ const LayoutSlug = props => {
       : `${post?.title} | ${siteInfo?.title}`
 
   const waiting404 = siteConfig('POST_WAITING_TIME_FOR_404') * 1000
-  
+
   useEffect(() => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
@@ -410,6 +420,24 @@ const LayoutSlug = props => {
   // 렌더링에 사용할 최종 한글 연월일 문자열 추출
   const formattedDateString = post ? formatKoreanDate(post.publishDate || post.date) : ''
 
+  // 🔥 [추가] 사이드바와 동일하게 정렬된 목록에서 일반 글(Post/Page)만 추출
+  const navPostList = filteredNavPages?.filter(
+    item => item.type !== 'Menu' && item.type !== 'SubMenu'
+  ) || []
+
+  // 🔥 [추가] 현재 글의 위치(Index) 찾기
+  const currentIndex = navPostList.findIndex(
+    item => item.id === post?.id || item.short_id === post?.short_id
+  )
+
+  // 🔥 [추가] 사이드바 순서 기준 Prev / Next 재계산
+  // (목록 상 위쪽에 위치한 글이 Prev, 아래쪽에 위치한 글이 Next)
+  const customPrev = currentIndex > 0 ? navPostList[currentIndex - 1] : null
+  const customNext =
+    currentIndex !== -1 && currentIndex < navPostList.length - 1
+      ? navPostList[currentIndex + 1]
+      : null
+
   return (
     <>
       <Head>
@@ -420,7 +448,7 @@ const LayoutSlug = props => {
 
       {!lock && (
         <div id='container' className='w-full'>
-          {/* 본문 제목 영역 */}
+        {/* 본문 제목 영역 */}
           <h1 className='text-3xl pt-12 font-bold dark:text-gray-300'>
             {siteConfig('POST_TITLE_ICON') && (
               <NotionIcon icon={post?.pageIcon} />
@@ -458,8 +486,9 @@ const LayoutSlug = props => {
                 </div>
               </div>
 
+              {/* 🔥 [수정] 기존 prev, next 대신 재계산한 customPrev, customNext 전달 */}
               {post?.type === 'Post' && (
-                <ArticleAround prev={prev} next={next} />
+                <ArticleAround prev={customPrev} next={customNext} />
               )}
 
               <Comment frontMatter={post} />

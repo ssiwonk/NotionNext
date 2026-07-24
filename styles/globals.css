@@ -637,8 +637,7 @@ main.notion table td * {
   color: darkblue !important; /* 👈 원하시는 색상 코드(HEX, RGB 등)를 넣으세요 */
 }
 
-/* 아이콘(이미지) 색상 필터 적용 */
-/* 예시: 파란색 계열로 톤 변경 (필요에 따라 filter 값 조정) */
+/* #logo-wrapper img 아이콘 색상을 선명한 파란색으로 변경 */
 #logo-wrapper img {
-  filter: invert(7%) sepia(48%) saturate(4646%) hue-rotate(206deg) brightness(93%) contrast(94%);
+  filter: invert(41%) sepia(94%) saturate(2371%) hue-rotate(193deg) brightness(97%) contrast(98%) !important;
 }

@@ -366,6 +366,11 @@ const formatKoreanDate = (dateVal) => {
 const LayoutSlug = props => {
   const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
   const router = useRouter()
+
+  // 🔥 [추가] 실시간 교체용 Prev / Next State 생성 (초기값은 서버 props)
+  const [currentPrev, setCurrentPrev] = useState(prev)
+  const [currentNext, setCurrentNext] = useState(next)
+
   const index = siteConfig('GITBOOK_INDEX_PAGE', 'about', CONFIG)
   const basePath = router.asPath.split('?')[0]
   const title =
@@ -378,6 +383,7 @@ const LayoutSlug = props => {
   useEffect(() => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
     
+    // --- 1. [기존 404 및 SCU 권한 체크] ---
     if (post) {
       const isDbItem = (post.type && ['Post', 'Page', 'Menu', 'SubMenu'].includes(post.type)) ||
                        allNavPages?.some(navPage => navPage.id === post.id || navPage.short_id === post.short_id)
@@ -411,7 +417,44 @@ const LayoutSlug = props => {
         }
       }, waiting404)
     }
-  }, [post, router.asPath, allNavPages])
+
+    // --- 2. [🔥 useEffect 내부에서 Prev / Next 실시간 재계산 및 교체] ---
+    setCurrentPrev(prev)
+    setCurrentNext(next)
+
+    if (allNavPages && post) {
+      // LayoutBase와 동일한 도메인 필터링
+      let pages = allNavPages.filter(item => {
+        if (currentHost.includes('scucontentspost')) {
+          return item.tags?.includes('scu') || item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+        }
+        return true
+      })
+
+      // 일반 포스트만 추출
+      const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
+
+      // LayoutBase와 100% 동일하게 date 기준 내림차순 정렬
+      postItems.sort((a, b) => {
+        const timeA = (a.publishDate || a.date) ? new Date(a.publishDate || a.date).getTime() : 0
+        const timeB = (b.publishDate || b.date) ? new Date(b.publishDate || b.date).getTime() : 0
+        return timeB - timeA
+      })
+
+      // 현재 포스트의 index 찾기
+      const idx = postItems.findIndex(item => 
+        item.id === post.id || 
+        item.short_id === post.short_id ||
+        (item.id && post.id && item.id.replace(/-/g, '') === post.id.replace(/-/g, ''))
+      )
+
+      if (idx !== -1) {
+        // 사이드바 목록 상 위쪽 글(idx - 1)이 Prev, 아래쪽 글(idx + 1)이 Next
+        setCurrentPrev(idx > 0 ? postItems[idx - 1] : null)
+        setCurrentNext(idx < postItems.length - 1 ? postItems[idx + 1] : null)
+      }
+    }
+  }, [post, allNavPages, prev, next, router.asPath])
   
   // 렌더링에 사용할 최종 한글 연월일 문자열 추출
   const formattedDateString = post ? formatKoreanDate(post.publishDate || post.date) : ''
@@ -434,7 +477,7 @@ const LayoutSlug = props => {
             {post?.title}
           </h1>
 
-          {/* 🔥 [수정] 정상적인 날짜 문자열이 최종 검증 통과했을 때만 화면에 랜더링 */}
+          {/* 날짜 표시 */}
           {formattedDateString && (
             <div className='text-sm text-gray-400 dark:text-gray-500 mt-3 pb-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-1.5'>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -464,8 +507,9 @@ const LayoutSlug = props => {
                 </div>
               </div>
 
+              {/* 🔥 재계산된 currentPrev, currentNext 전달 */}
               {post?.type === 'Post' && (
-                <ArticleAround prev={prev} next={next} />
+                <ArticleAround prev={currentPrev} next={currentNext} />
               )}
 
               <Comment frontMatter={post} />

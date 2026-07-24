@@ -361,13 +361,16 @@ const formatKoreanDate = (dateVal) => {
 }
 
 /**
- * 글 상세 페이지 (Slug)
+ * 글 상세 페이지 (Slug) - 디버깅 버전
  */
 const LayoutSlug = props => {
   const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
   const router = useRouter()
 
-  // 🔥 [추가] 실시간 교체용 Prev / Next State 생성 (초기값은 서버 props)
+  // 전역 Context에 담긴 filteredNavPages 확인
+  const gitbookGlobal = useGitBookGlobal()
+  const contextPages = gitbookGlobal?.filteredNavPages
+
   const [currentPrev, setCurrentPrev] = useState(prev)
   const [currentNext, setCurrentNext] = useState(next)
 
@@ -379,84 +382,78 @@ const LayoutSlug = props => {
       : `${post?.title} | ${siteInfo?.title}`
 
   const waiting404 = siteConfig('POST_WAITING_TIME_FOR_404') * 1000
-  
+
   useEffect(() => {
+    // ---------------- [🔍 디버그 콘솔 시작] ----------------
+    console.group('🔍 [LayoutSlug 디버거]');
+    console.log('1️⃣ 현재 글 제목:', post?.title, '| ID:', post?.id);
+    console.log('2️⃣ 서버가 준 기본 (Prev / Next):', prev?.title, '/', next?.title);
+    console.log('3️⃣ Props로 들어온 allNavPages 개수:', allNavPages?.length);
+    console.log('4️⃣ Context에서 가져온 filteredNavPages 개수:', contextPages?.length);
+
+    // Context에 정렬된 데이터가 있으면 우선 사용, 없으면 props 데이터 사용
+    const targetPages = (contextPages && contextPages.length > 0) ? contextPages : allNavPages
+
+    if (!targetPages || targetPages.length === 0) {
+      console.warn('⚠️ [경고] targetPages 배열이 아예 비어있습니다!');
+      console.groupEnd();
+      return;
+    }
+
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
-    
-    // --- 1. [기존 404 및 SCU 권한 체크] ---
-    if (post) {
-      const isDbItem = (post.type && ['Post', 'Page', 'Menu', 'SubMenu'].includes(post.type)) ||
-                       allNavPages?.some(navPage => navPage.id === post.id || navPage.short_id === post.short_id)
-                       
-      const isScu404Page = post.slug === 'scu404' || router.asPath.includes('scu404')
 
-      if (currentHost.includes('scucontentspost') && !isScu404Page) {
-        if (isDbItem) {
-          const hasScuTag = post.tags?.includes('scu') || 
-                            post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
-                            
-          if (!hasScuTag) {
-            router.push('/scu404')
-            return
-          }
-        }
+    // 1) 도메인 필터링
+    const filtered = targetPages.filter(item => {
+      if (currentHost.includes('scucontentspost')) {
+        return item.tags?.includes('scu') || item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
       }
-    }
+      return true
+    })
 
-    if (!post) {
-      setTimeout(() => {
-        if (isBrowser) {
-          const article = document.querySelector(
-            '#article-wrapper #notion-article'
-          )
-          if (!article) {
-            router.push('/404').then(() => {
-              console.warn('페이지를 찾을 수 없음', router.asPath)
-            })
-          }
-        }
-      }, waiting404)
-    }
+    // 2) 일반 포스트만 추출 (메뉴 제외)
+    const postItems = filtered.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
+    console.log('5️⃣ 메뉴 제외 후 포스트 목록 개수:', postItems.length);
 
-    // --- 2. [🔥 useEffect 내부에서 Prev / Next 실시간 재계산 및 교체] ---
-    setCurrentPrev(prev)
-    setCurrentNext(next)
+    // 3) 날짜 내림차순 정렬
+    postItems.sort((a, b) => {
+      const timeA = (a.publishDate || a.date) ? new Date(a.publishDate || a.date).getTime() : 0
+      const timeB = (b.publishDate || b.date) ? new Date(b.publishDate || b.date).getTime() : 0
+      return timeB - timeA
+    })
 
-    if (allNavPages && post) {
-      // LayoutBase와 동일한 도메인 필터링
-      let pages = allNavPages.filter(item => {
-        if (currentHost.includes('scucontentspost')) {
-          return item.tags?.includes('scu') || item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
-        }
-        return true
-      })
+    console.log('6️⃣ 최종 정렬된 글 순서 목록:', postItems.map(p => p.title));
 
-      // 일반 포스트만 추출
-      const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
-
-      // LayoutBase와 100% 동일하게 date 기준 내림차순 정렬
-      postItems.sort((a, b) => {
-        const timeA = (a.publishDate || a.date) ? new Date(a.publishDate || a.date).getTime() : 0
-        const timeB = (b.publishDate || b.date) ? new Date(b.publishDate || b.date).getTime() : 0
-        return timeB - timeA
-      })
-
-      // 현재 포스트의 index 찾기
-      const idx = postItems.findIndex(item => 
-        item.id === post.id || 
-        item.short_id === post.short_id ||
-        (item.id && post.id && item.id.replace(/-/g, '') === post.id.replace(/-/g, ''))
+    // 4) 현재 글 위치(Index) 찾기
+    const idx = postItems.findIndex(item => {
+      if (!item || !post) return false
+      const itemIdClean = item.id ? item.id.replace(/-/g, '') : ''
+      const postIdClean = post.id ? post.id.replace(/-/g, '') : ''
+      return (
+        (itemIdClean && postIdClean && itemIdClean === postIdClean) ||
+        (item.short_id && post.short_id && item.short_id === post.short_id)
       )
+    })
 
-      if (idx !== -1) {
-        // 사이드바 목록 상 위쪽 글(idx - 1)이 Prev, 아래쪽 글(idx + 1)이 Next
-        setCurrentPrev(idx > 0 ? postItems[idx - 1] : null)
-        setCurrentNext(idx < postItems.length - 1 ? postItems[idx + 1] : null)
-      }
+    console.log('7️⃣ findIndex로 찾은 현재 글 위치(index):', idx);
+
+    if (idx !== -1) {
+      const calcPrev = idx > 0 ? postItems[idx - 1] : null
+      const calcNext = idx < postItems.length - 1 ? postItems[idx + 1] : null
+
+      console.log('8️⃣ 🎯 [계산 완료]');
+      console.log('   - 변경할 Prev (위쪽 글):', calcPrev?.title || '없음(첫 글)');
+      console.log('   - 변경할 Next (아래쪽 글):', calcNext?.title || '없음(마지막 글)');
+
+      setCurrentPrev(calcPrev)
+      setCurrentNext(calcNext)
+    } else {
+      console.error('❌ [오류] 현재 글 ID가 postItems 목록에서 매칭되지 않았습니다!');
     }
-  }, [post, allNavPages, prev, next, router.asPath])
-  
-  // 렌더링에 사용할 최종 한글 연월일 문자열 추출
+    console.groupEnd();
+    // ---------------- [🔍 디버그 콘솔 끝] ----------------
+
+  }, [post, allNavPages, contextPages, prev, next, router.asPath])
+
   const formattedDateString = post ? formatKoreanDate(post.publishDate || post.date) : ''
 
   return (
@@ -469,7 +466,6 @@ const LayoutSlug = props => {
 
       {!lock && (
         <div id='container' className='w-full'>
-          {/* 본문 제목 영역 */}
           <h1 className='text-3xl pt-12 font-bold dark:text-gray-300'>
             {siteConfig('POST_TITLE_ICON') && (
               <NotionIcon icon={post?.pageIcon} />
@@ -477,7 +473,6 @@ const LayoutSlug = props => {
             {post?.title}
           </h1>
 
-          {/* 날짜 표시 */}
           {formattedDateString && (
             <div className='text-sm text-gray-400 dark:text-gray-500 mt-3 pb-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-1.5'>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -507,7 +502,6 @@ const LayoutSlug = props => {
                 </div>
               </div>
 
-              {/* 🔥 재계산된 currentPrev, currentNext 전달 */}
               {post?.type === 'Post' && (
                 <ArticleAround prev={currentPrev} next={currentNext} />
               )}

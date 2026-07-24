@@ -49,24 +49,31 @@ const ThemeGlobalGitbook = createContext()
 export const useGitBookGlobal = () => useContext(ThemeGlobalGitbook)
 
 /**
+ * 태그 포함 여부를 확인하는 헬퍼 함수
+ */
+const checkHasTag = (item, tagName) => {
+  if (!item) return false
+  return (
+    item.tags?.includes(tagName) ||
+    item.tagItems?.some(t => t === tagName || t?.name === tagName)
+  )
+}
+
+/**
  * 오늘 날짜(YYYY-MM-DD)에 작성/발행된 글에만 빨간 점 표시
  */
 function getNavPagesWithLatest(allNavPages, latestPosts, post) {
-  // 오늘 날짜 기준점 (연, 월, 일)
   const now = new Date()
   const todayYear = now.getFullYear()
   const todayMonth = now.getMonth()
   const todayDate = now.getDate()
 
   return allNavPages?.map(item => {
-    // 날짜 데이터 추출 (publishDate > date > createdTime 순으로 확인)
     const rawDate = item.publishDate || item.date || item.createdTime
     let isToday = false
 
     if (rawDate) {
       const itemDate = new Date(rawDate)
-      
-      // 날짜가 올바른 형식인지 확인 후 오늘 날짜와 일치하는지 비교
       if (!isNaN(itemDate.getTime())) {
         isToday =
           itemDate.getFullYear() === todayYear &&
@@ -78,7 +85,7 @@ function getNavPagesWithLatest(allNavPages, latestPosts, post) {
     return {
       ...item,
       publishDate: item.publishDate || item.date || null,
-      isLatest: isToday // 오늘 작성된 글일 때만 true
+      isLatest: isToday
     }
   })
 }
@@ -106,17 +113,19 @@ const LayoutBase = props => {
 
   useEffect(() => {
     const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
-    
+
     // 1. 기본 마킹 데이터 확보
     let pages = getNavPagesWithLatest(allNavPages, latestPosts, post)
-    
-    // 2. 도메인별 필터링
+
+    // 2. 도메인별 필터링 (scu, ssiwonk, 기타 도메인)
     pages = pages?.filter(item => {
       if (currentHost.includes('scucontentspost')) {
-        const hasScuTag = item.tags?.includes('scu') || 
-                          item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
-        return hasScuTag
+        return checkHasTag(item, '태그1')
       }
+      if (currentHost.includes('ssiwonkdocs')) {
+        return checkHasTag(item, '태그2')
+      }
+      // 기타 도메인 접속 시 모든 포스트 노출
       return true
     })
 
@@ -125,21 +134,21 @@ const LayoutBase = props => {
       const menuItems = pages.filter(item => item.type === 'Menu' || item.type === 'SubMenu')
       const postItems = pages.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
 
-      // 🔥 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 '내림차순' 정렬합니다.
+      // 메뉴 아이템들을 무조건 생성일시(createdTime) 기준으로 내림차순 정렬
       menuItems.sort((a, b) => {
         const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0
         const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0
-        return timeB - timeA 
+        return timeB - timeA
       })
 
-      // 4. 일반 포스트들도 원하는 대로 date 기준 내림차순 정렬
+      // 일반 포스트들도 date 기준 내림차순 정렬
       postItems.sort((a, b) => {
         const timeA = a.publishDate ? new Date(a.publishDate).getTime() : 0
         const timeB = b.publishDate ? new Date(b.publishDate).getTime() : 0
-        return timeB - timeA 
+        return timeB - timeA
       })
 
-      // 5. 정렬 완료된 메뉴와 포스트 결합
+      // 정렬 완료된 메뉴와 포스트 결합
       const finalPages = [...menuItems, ...postItems]
       setFilteredNavPages(finalPages)
     } else {
@@ -152,6 +161,7 @@ const LayoutBase = props => {
     true,
     CONFIG
   )
+
   return (
     <ThemeGlobalGitbook.Provider
       value={{
@@ -160,7 +170,7 @@ const LayoutBase = props => {
         changeTocVisible,
         filteredNavPages,
         setFilteredNavPages,
-        allNavPages: filteredNavPages, 
+        allNavPages: filteredNavPages,
         pageNavVisible,
         changePageNavVisible
       }}>
@@ -171,28 +181,27 @@ const LayoutBase = props => {
         className={`${siteConfig('FONT_STYLE')} pb-16 md:pb-0 scroll-smooth bg-white dark:bg-black w-full h-full min-h-screen justify-center dark:text-gray-300`}>
         <AlgoliaSearchModal cRef={searchModal} {...props} />
 
-        {/* 상단 헤더에 내림차순 정렬된 메뉴 데이터 주입 및 원본 오버라이드 */}
-        <Header 
-          {...props} 
+        {/* 상단 헤더 */}
+        <Header
+          {...props}
           allNavPages={filteredNavPages}
-          customNav={filteredNavPages?.filter(item => item.type === 'Menu' || item.type === 'SubMenu')} 
+          customNav={filteredNavPages?.filter(item => item.type === 'Menu' || item.type === 'SubMenu')}
         />
 
         <main
           id='wrapper'
           className={`${siteConfig('LAYOUT_SIDEBAR_REVERSE') ? 'flex-row-reverse' : ''} relative flex justify-between w-full gap-x-6 h-full mx-auto max-w-screen-4xl`}>
-          {/* 왼쪽 사이드바 메뉴판 */}
+          {/* 왼쪽 사이드바 메뉴 */}
           {fullWidth ? null : (
             <div className={'hidden md:block relative z-10 '}>
               <div className='w-80 pt-14 pb-4 sticky top-0 h-screen flex justify-between flex-col'>
                 <div className='overflow-y-scroll scroll-hidden pt-10 pl-5'>
                   {slotLeft}
 
-                  {/* 글 목록 컴포넌트에도 정렬된 데이터 강제 피딩 */}
-                  <NavPostList 
-                    {...props} 
-                    allNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} 
-                    filteredNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')} 
+                  <NavPostList
+                    {...props}
+                    allNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')}
+                    filteredNavPages={filteredNavPages?.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')}
                   />
                 </div>
                 <Footer {...props} />
@@ -259,10 +268,10 @@ const LayoutBase = props => {
         <JumpToTopButton />
 
         {/* 모바일 메뉴 드로어 */}
-        <PageNavDrawer 
-          {...props} 
-          filteredNavPages={filteredNavPages} 
-          allNavPages={filteredNavPages} 
+        <PageNavDrawer
+          {...props}
+          filteredNavPages={filteredNavPages}
+          allNavPages={filteredNavPages}
         />
 
         <BottomMenuBar {...props} />
@@ -313,13 +322,11 @@ const LayoutPostList = props => {
   return <></>
 }
 
-// 🔥 [예외 처리 보강] 안전하게 연월일(YYYY년 M월 D일) 형태로 포맷팅하는 함수
-// 데이터 형식이 깨진 하위 인라인 페이지 데이터가 들어와도 에러를 뱉지 않고 빌드 다운을 막아줍니다.
+// 안전하게 연월일(YYYY년 M월 D일) 형태로 포맷팅하는 함수
 const formatKoreanDate = (dateVal) => {
   if (!dateVal) return ''
-  
+
   try {
-    // 1. 순수 문자열 형태인 경우 (예: '2026/07/05' 또는 '2026-07-05')
     if (typeof dateVal === 'string') {
       const parts = dateVal.split(/[-/.\s]/).filter(Boolean)
       if (parts.length >= 3) {
@@ -330,8 +337,7 @@ const formatKoreanDate = (dateVal) => {
           return `${year}년 ${month}월 ${day}일`
         }
       }
-      
-      // 타임스탬프 형태의 문자열 처리
+
       if (/^\d+$/.test(dateVal)) {
         const dateObj = new Date(parseInt(dateVal, 10))
         if (!isNaN(dateObj.getTime())) {
@@ -340,24 +346,22 @@ const formatKoreanDate = (dateVal) => {
       }
       return dateVal
     }
-    
-    // 2. 정수 타임스탬프 숫자인 경우 처리
+
     if (typeof dateVal === 'number') {
       const dateObj = new Date(dateVal)
       if (!isNaN(dateObj.getTime())) {
         return `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일`
       }
     }
-    
-    // 3. Date 객체 타입인 경우 처리
+
     if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
       return `${dateVal.getFullYear()}년 ${dateVal.getMonth() + 1}월 ${dateVal.getDate()}일`
     }
   } catch (error) {
-    console.error('날짜 포맷팅 중 예측하지 못한 필드 오동작:', error)
+    console.error('날짜 포맷팅 중 예외 발생:', error)
   }
-  
-  return '' // 문자열 파싱이 불가능한 잘못된 오브젝트 데이터가 오면 빈 문자열을 반환하여 렌더링 스킵
+
+  return ''
 }
 
 /**
@@ -382,18 +386,22 @@ const LayoutSlug = props => {
   const waiting404 = siteConfig('POST_WAITING_TIME_FOR_404') * 1000
 
   useEffect(() => {
-    if (post) {
+    if (post && typeof window !== 'undefined') {
       const isDbItem = (post.type && ['Post', 'Page', 'Menu', 'SubMenu'].includes(post.type)) ||
                        allNavPages?.some(navPage => navPage.id === post.id || navPage.short_id === post.short_id)
-                       
+
+      const currentHost = window.location.hostname
       const isScu404Page = post.slug === 'scu404' || router.asPath.includes('scu404')
 
-      if (typeof window !== 'undefined' && window.location.hostname.includes('scucontentspost') && !isScu404Page) {
-        if (isDbItem) {
-          const hasScuTag = post.tags?.includes('scu') || 
-                            post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
-                            
-          if (!hasScuTag) {
+      // 권한 없는 포스트에 접근 시 무조건 '/scu404' 페이지로 보냄
+      if (isDbItem && !isScu404Page) {
+        if (currentHost.includes('scucontentspost')) {
+          if (!checkHasTag(post, '태그1')) {
+            router.push('/scu404')
+            return
+          }
+        } else if (currentHost.includes('ssiwonkdocs')) {
+          if (!checkHasTag(post, '태그2')) {
             router.push('/scu404')
             return
           }
@@ -401,12 +409,13 @@ const LayoutSlug = props => {
       }
     }
 
+    // 포스트 데이터가 전혀 없는 404 상태일 때도 '/scu404'로 보냄
     if (!post) {
       setTimeout(() => {
         if (isBrowser) {
           const article = document.querySelector('#article-wrapper #notion-article')
           if (!article) {
-            router.push('/404').then(() => console.warn('페이지를 찾을 수 없음', router.asPath))
+            router.push('/scu404').then(() => console.warn('페이지를 찾을 수 없음', router.asPath))
           }
         }
       }, waiting404)
@@ -418,11 +427,14 @@ const LayoutSlug = props => {
     if (targetPages && post) {
       const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
 
-      // 1. 메뉴 제외 및 도메인 필터링
+      // 1. 메뉴 제외 및 도메인별 필터링
       const postItems = targetPages.filter(item => {
         if (item.type === 'Menu' || item.type === 'SubMenu') return false
         if (currentHost.includes('scucontentspost')) {
-          return item.tags?.includes('scu') || item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+          return checkHasTag(item, '태그1')
+        }
+        if (currentHost.includes('ssiwonkdocs')) {
+          return checkHasTag(item, '태그2')
         }
         return true
       })
@@ -447,10 +459,10 @@ const LayoutSlug = props => {
         categoryMap[cat].push(item)
       })
 
-      // 4. 사이드바 위에서 아래 순서의 1차원 배열 생성
+      // 4. 1차원 배열 생성
       const sidebarOrderedPosts = categoryOrder.flatMap(cat => categoryMap[cat])
 
-      // 5. 제목(title) 또는 ID 기반으로 현재 글 위치(Index) 찾기
+      // 5. 현재 글 위치(Index) 찾기
       const idx = sidebarOrderedPosts.findIndex(item => {
         if (!item || !post) return false
         const itemIdClean = item.id ? item.id.replace(/-/g, '') : ''
@@ -463,11 +475,10 @@ const LayoutSlug = props => {
         )
       })
 
-      // 6. 🔥 무한 순환(Circular) 이전글 / 다음글 계산
+      // 6. 무한 순환 이전글 / 다음글 계산
       if (idx !== -1) {
         const len = sidebarOrderedPosts.length
         if (len > 1) {
-          // 첫 글에서 Prev 클릭 시 맨 마지막 글, 마지막 글에서 Next 클릭 시 맨 첫 글 연결
           const prevIdx = (idx - 1 + len) % len
           const nextIdx = (idx + 1) % len
 
@@ -516,7 +527,7 @@ const LayoutSlug = props => {
               </div>
 
               <ShareBar post={post} />
-              
+
               <div className='flex justify-between mt-6'>
                 {siteConfig('POST_DETAIL_CATEGORY') && post?.category && (
                   <CategoryItem category={post.category} />
@@ -567,12 +578,12 @@ const LayoutArchive = props => {
 
 const Layout404 = props => {
   const router = useRouter()
-  const { locale } = useGlobal()
   useEffect(() => {
+    // 404 폴백 컴포넌트 진입 시에도 '/scu404'로 이동
     setTimeout(() => {
       const article = isBrowser && document.getElementById('article-wrapper')
       if (!article) {
-        router.push('/')
+        router.push('/scu404')
       }
     }, 3000)
   }, [])
@@ -586,7 +597,7 @@ const Layout404 = props => {
             404
           </h2>
           <div className='inline-block text-left h-32 leading-10 items-center'>
-            <h2 className='m-0 p-0'>{locale.NAV.PAGE_NOT_FOUND_REDIRECT}</h2>
+            <h2 className='m-0 p-0'>페이지를 이동 중입니다...</h2>
           </div>
         </div>
       </div>

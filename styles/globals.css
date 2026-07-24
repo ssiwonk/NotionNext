@@ -5,10 +5,30 @@
 /* 1. 프리텐다드 가변 폰트(Variable) 불러오기 (모바일 볼드 미표시 버그 완벽 해결) */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css');
 
+/* 1. Light (300) */
 @font-face {
-    font-family: 'NanumBarunPen';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunpen.woff') format('woff');
-    font-weight: normal;
+    font-family: 'NanumBarunGothic';
+    font-style: normal;
+    font-weight: 300;
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunGothicLight.woff') format('woff');
+    font-display: swap;
+}
+
+/* 2. Regular (400) */
+@font-face {
+    font-family: 'NanumBarunGothic';
+    font-style: normal;
+    font-weight: 400;
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunGothic.woff') format('woff');
+    font-display: swap;
+}
+
+/* 3. Bold (700) */
+@font-face {
+    font-family: 'NanumBarunGothic';
+    font-style: normal;
+    font-weight: 700;
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunGothicBold.woff') format('woff');
     font-display: swap;
 }
 
@@ -371,49 +391,70 @@ main.notion .notion-callout-text * {
     line-height: 1.8 !important;    /* 글자 겹침 현상을 완벽히 막고, 본문과 가장 잘 어울리는 단정한 줄간격 */
     font-size: 1.05rem !important;  /* 주변 일반 본문 글자들과 이질감 없이 딱 맞아떨어지는 크기 */
 }
-
-/* [페이지 링크] 본문 내 다른 노션 페이지 연결 위젯 크기 및 자식 요소 통일 */
+/* [페이지 링크] 본문 및 콜아웃 내 노션 페이지 연결 위젯 통합 설정 */
 .notion-page-link, 
 a[class*="page-link"], 
 .notion-page-shortcut,
 .notion-mention,
+a.notion-link,
 [class*="notion-link"] {
-  font-size: 1.1rem !important; 
+  font-size: 1.05rem !important; 
   font-weight: 500 !important;
-  display: inline-flex !important; /* 블록 요소처럼 거대하게 변하는 것 방지 */
+  display: inline-flex !important; /* 블록 요소로 거대해지는 현상 방지 */
   align-items: center !important;
   vertical-align: middle !important;
-  padding: 0 4px !important;       /* 가로/세로 여백을 최소화하여 한 단어처럼 흐르도록 수정 */
+  padding: 0 4px !important;
   margin: 0 !important;
-  background: transparent !important; /* 링크 박스 배경 제거하여 자연스럽게 연결 */
+  background: transparent !important;
   color: blue !important;
 }
 
-/* 페이지 링크 내부의 글자 크기도 목록과 완벽히 일치하도록 강제 */
+/* 페이지 링크 내부 글자 색상 및 크기 통일 */
 .notion-page-link *, 
 a[class*="page-link"] *, 
 .notion-page-shortcut *,
-.notion-mention * {
-  font-size: 1.1rem !important;
+.notion-mention *,
+a.notion-link * {
+  font-size: 1.05rem !important;
   line-height: inherit !important;
   color: blue !important;
 }
 
-/* 페이지 링크 내부 아이콘(svg/img) 크기도 글자 크기(1.1em)에 맞춰 대폭 축소 */
+/* [핵심 해결] 콜아웃 내부 링크 아이콘 박스(notion-page-icon-inline) 레이아웃 복원 */
+.notion-callout .notion-callout-text .notion-page-icon-inline,
+.notion-page-icon-inline {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  height: auto !important;
+  margin-right: 0.3em !important;
+  vertical-align: middle !important;
+}
+
+/* [핵심 해결] 페이지 링크 및 콜아웃 내부 아이콘(svg/img) 강제 노출 및 크기 보정 */
 .notion-page-link .notion-page-icon,
 .notion-page-shortcut .notion-page-icon,
 .notion-mention .notion-page-icon,
+.notion-link .notion-page-icon,
+.notion-page-icon-inline svg,
+.notion-page-icon-inline img,
+.notion-page-title-icon,
 .notion-page-link svg,
 .notion-page-shortcut svg,
 .notion-page-link img,
-.notion-page-shortcut img {
+.notion-page-shortcut img,
+a.notion-link svg,
+a.notion-link img {
+  display: inline-block !important;
   width: 1.1em !important;
   height: 1.1em !important;
   min-width: 1.1em !important;
   min-height: 1.1em !important;
-  margin-right: 0.3em !important;
-  display: inline-block !important;
+  margin-right: 0.2em !important;
   vertical-align: middle !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* [인용문구] 인용 블록 서식 정돈 */
@@ -565,8 +606,8 @@ main.notion table td * {
   white-space: nowrap;     /* 1. 글자가 다음 줄로 넘어가지 않도록 강제 한 줄 처리 */
   overflow: hidden;        /* 2. 박스 너비를 벗어난 넘치는 글자는 숨김 */
   text-overflow: ellipsis; /* 3. 숨겨진 글자 끝에 말줄임표(...)를 표시 */ 
-  /* font-family: 'NanumBarunPen'; */
-  font-size: 0.9rem; /* 뭐지 왜 커밋을 안하지? */
+  font-family: 'NanumBarunGothic'; 
+  font-size: 0.95rem; 
 }
 
 /* 복잡한 '2xl:block' 글자를 피해 구조(main 안의 w-72)로 강제 필살기 적용 */

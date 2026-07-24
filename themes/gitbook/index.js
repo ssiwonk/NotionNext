@@ -361,13 +361,11 @@ const formatKoreanDate = (dateVal) => {
 }
 
 /**
- * 글 상세 페이지 (Slug) - 디버깅 버전
+ * 글 상세 페이지 (Slug)
  */
 const LayoutSlug = props => {
   const { post, prev, next, siteInfo, lock, validPassword, allNavPages } = props
   const router = useRouter()
-
-  // 전역 Context에 담긴 filteredNavPages 확인
   const gitbookGlobal = useGitBookGlobal()
   const contextPages = gitbookGlobal?.filteredNavPages
 
@@ -384,74 +382,93 @@ const LayoutSlug = props => {
   const waiting404 = siteConfig('POST_WAITING_TIME_FOR_404') * 1000
 
   useEffect(() => {
-    // ---------------- [🔍 디버그 콘솔 시작] ----------------
-    console.group('🔍 [LayoutSlug 디버거]');
-    console.log('1️⃣ 현재 글 제목:', post?.title, '| ID:', post?.id);
-    console.log('2️⃣ 서버가 준 기본 (Prev / Next):', prev?.title, '/', next?.title);
-    console.log('3️⃣ Props로 들어온 allNavPages 개수:', allNavPages?.length);
-    console.log('4️⃣ Context에서 가져온 filteredNavPages 개수:', contextPages?.length);
+    if (post) {
+      const isDbItem = (post.type && ['Post', 'Page', 'Menu', 'SubMenu'].includes(post.type)) ||
+                       allNavPages?.some(navPage => navPage.id === post.id || navPage.short_id === post.short_id)
+                       
+      const isScu404Page = post.slug === 'scu404' || router.asPath.includes('scu404')
 
-    // Context에 정렬된 데이터가 있으면 우선 사용, 없으면 props 데이터 사용
+      if (typeof window !== 'undefined' && window.location.hostname.includes('scucontentspost') && !isScu404Page) {
+        if (isDbItem) {
+          const hasScuTag = post.tags?.includes('scu') || 
+                            post.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+                            
+          if (!hasScuTag) {
+            router.push('/scu404')
+            return
+          }
+        }
+      }
+    }
+
+    if (!post) {
+      setTimeout(() => {
+        if (isBrowser) {
+          const article = document.querySelector('#article-wrapper #notion-article')
+          if (!article) {
+            router.push('/404').then(() => console.warn('페이지를 찾을 수 없음', router.asPath))
+          }
+        }
+      }, waiting404)
+    }
+
+    // --- 🔥 [사이드바 100% 동일 순서 재현 로직] ---
     const targetPages = (contextPages && contextPages.length > 0) ? contextPages : allNavPages
 
-    if (!targetPages || targetPages.length === 0) {
-      console.warn('⚠️ [경고] targetPages 배열이 아예 비어있습니다!');
-      console.groupEnd();
-      return;
-    }
+    if (targetPages && post) {
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
 
-    const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
+      // 1. 메뉴 제외 및 도메인 필터링
+      const postItems = targetPages.filter(item => {
+        if (item.type === 'Menu' || item.type === 'SubMenu') return false
+        if (currentHost.includes('scucontentspost')) {
+          return item.tags?.includes('scu') || item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+        }
+        return true
+      })
 
-    // 1) 도메인 필터링
-    const filtered = targetPages.filter(item => {
-      if (currentHost.includes('scucontentspost')) {
-        return item.tags?.includes('scu') || item.tagItems?.some(t => t === 'scu' || t?.name === 'scu')
+      // 2. 날짜 내림차순 정렬
+      postItems.sort((a, b) => {
+        const timeA = (a.publishDate || a.date) ? new Date(a.publishDate || a.date).getTime() : 0
+        const timeB = (b.publishDate || b.date) ? new Date(b.publishDate || b.date).getTime() : 0
+        return timeB - timeA
+      })
+
+      // 3. 사이드바와 동일하게 '카테고리별 그룹화'
+      const categoryMap = {}
+      const categoryOrder = []
+
+      postItems.forEach(item => {
+        const cat = item.category || '기타'
+        if (!categoryMap[cat]) {
+          categoryMap[cat] = []
+          categoryOrder.push(cat)
+        }
+        categoryMap[cat].push(item)
+      })
+
+      // 4. 사이드바 위에서 아래 순서의 1차원 배열 생성
+      const sidebarOrderedPosts = categoryOrder.flatMap(cat => categoryMap[cat])
+
+      // 5. 제목(title) 또는 ID 기반으로 현재 글 위치(Index) 찾기
+      const idx = sidebarOrderedPosts.findIndex(item => {
+        if (!item || !post) return false
+        const itemIdClean = item.id ? item.id.replace(/-/g, '') : ''
+        const postIdClean = post.id ? post.id.replace(/-/g, '') : ''
+
+        return (
+          (item.title && post.title && item.title === post.title) || // 💡 제목 매칭 (가장 확실함)
+          (itemIdClean && postIdClean && itemIdClean === postIdClean) ||
+          (item.slug && post.slug && item.slug === post.slug)
+        )
+      })
+
+      // 6. 이전글 / 다음글 세팅
+      if (idx !== -1) {
+        setCurrentPrev(idx > 0 ? sidebarOrderedPosts[idx - 1] : null)
+        setCurrentNext(idx < sidebarOrderedPosts.length - 1 ? sidebarOrderedPosts[idx + 1] : null)
       }
-      return true
-    })
-
-    // 2) 일반 포스트만 추출 (메뉴 제외)
-    const postItems = filtered.filter(item => item.type !== 'Menu' && item.type !== 'SubMenu')
-    console.log('5️⃣ 메뉴 제외 후 포스트 목록 개수:', postItems.length);
-
-    // 3) 날짜 내림차순 정렬
-    postItems.sort((a, b) => {
-      const timeA = (a.publishDate || a.date) ? new Date(a.publishDate || a.date).getTime() : 0
-      const timeB = (b.publishDate || b.date) ? new Date(b.publishDate || b.date).getTime() : 0
-      return timeB - timeA
-    })
-
-    console.log('6️⃣ 최종 정렬된 글 순서 목록:', postItems.map(p => p.title));
-
-    // 4) 현재 글 위치(Index) 찾기
-    const idx = postItems.findIndex(item => {
-      if (!item || !post) return false
-      const itemIdClean = item.id ? item.id.replace(/-/g, '') : ''
-      const postIdClean = post.id ? post.id.replace(/-/g, '') : ''
-      return (
-        (itemIdClean && postIdClean && itemIdClean === postIdClean) ||
-        (item.short_id && post.short_id && item.short_id === post.short_id)
-      )
-    })
-
-    console.log('7️⃣ findIndex로 찾은 현재 글 위치(index):', idx);
-
-    if (idx !== -1) {
-      const calcPrev = idx > 0 ? postItems[idx - 1] : null
-      const calcNext = idx < postItems.length - 1 ? postItems[idx + 1] : null
-
-      console.log('8️⃣ 🎯 [계산 완료]');
-      console.log('   - 변경할 Prev (위쪽 글):', calcPrev?.title || '없음(첫 글)');
-      console.log('   - 변경할 Next (아래쪽 글):', calcNext?.title || '없음(마지막 글)');
-
-      setCurrentPrev(calcPrev)
-      setCurrentNext(calcNext)
-    } else {
-      console.error('❌ [오류] 현재 글 ID가 postItems 목록에서 매칭되지 않았습니다!');
     }
-    console.groupEnd();
-    // ---------------- [🔍 디버그 콘솔 끝] ----------------
-
   }, [post, allNavPages, contextPages, prev, next, router.asPath])
 
   const formattedDateString = post ? formatKoreanDate(post.publishDate || post.date) : ''

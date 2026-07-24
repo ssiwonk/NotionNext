@@ -386,6 +386,7 @@ a[class*="page-link"],
   padding: 0 4px !important;       /* 가로/세로 여백을 최소화하여 한 단어처럼 흐르도록 수정 */
   margin: 0 !important;
   background: transparent !important; /* 링크 박스 배경 제거하여 자연스럽게 연결 */
+  color: blue !important;
 }
 
 /* 페이지 링크 내부의 글자 크기도 목록과 완벽히 일치하도록 강제 */
@@ -395,6 +396,7 @@ a[class*="page-link"] *,
 .notion-mention * {
   font-size: 1.1rem !important;
   line-height: inherit !important;
+  color: blue !important;
 }
 
 /* 페이지 링크 내부 아이콘(svg/img) 크기도 글자 크기(1.1em)에 맞춰 대폭 축소 */
@@ -563,7 +565,8 @@ main.notion table td * {
   white-space: nowrap;     /* 1. 글자가 다음 줄로 넘어가지 않도록 강제 한 줄 처리 */
   overflow: hidden;        /* 2. 박스 너비를 벗어난 넘치는 글자는 숨김 */
   text-overflow: ellipsis; /* 3. 숨겨진 글자 끝에 말줄임표(...)를 표시 */ 
-  font-family: 'NanumBarunPen';
+  /* font-family: 'NanumBarunPen'; */
+  font-size: 0.9rem; /* 뭐지 왜 커밋을 안하지? */
 }
 
 /* 복잡한 '2xl:block' 글자를 피해 구조(main 안의 w-72)로 강제 필살기 적용 */
